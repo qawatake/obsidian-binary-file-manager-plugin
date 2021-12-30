@@ -242,11 +242,29 @@ class SampleSettingTab extends PluginSettingTab {
 					})
 			);
 
+		let extensionToBeAdded: string;
+		new Setting(containerEl)
+			.setName('Add extension')
+			.addText((text) =>
+				text
+					.setPlaceholder('Extension (e.g., pdf)')
+					.onChange((value) => {
+						extensionToBeAdded = value.trim();
+					})
+			)
+			.addButton((cb) => {
+				cb.setButtonText('Add').onClick(async () => {
+					this.plugin.settings.extensions.push(extensionToBeAdded);
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			});
+
 		this.plugin.settings.extensions.forEach((ext, index) => {
 			new Setting(containerEl).setName(ext).addExtraButton((cb) => {
-				cb.setIcon('cross').onClick(() => {
+				cb.setIcon('cross').onClick(async () => {
 					this.plugin.settings.extensions.splice(index, 1);
-					this.plugin.saveSettings();
+					await this.plugin.saveSettings();
 					this.display();
 				});
 			});
