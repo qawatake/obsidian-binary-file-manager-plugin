@@ -248,11 +248,25 @@ class SampleSettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder('Extension (e.g., pdf)')
 					.onChange((value) => {
-						extensionToBeAdded = value.trim();
+						extensionToBeAdded = value.trim().replace(/^\./, '');
 					})
 			)
 			.addButton((cb) => {
 				cb.setButtonText('Add').onClick(async () => {
+					if (extensionToBeAdded === 'md') {
+						new Notice('extension "md" is prohibited');
+						return;
+					}
+					if (
+						this.plugin.settings.extensions.includes(
+							extensionToBeAdded
+						)
+					) {
+						new Notice(
+							`${extensionToBeAdded} is already registered`
+						);
+						return;
+					}
 					this.plugin.settings.extensions.push(extensionToBeAdded);
 					await this.plugin.saveSettings();
 					this.display();
