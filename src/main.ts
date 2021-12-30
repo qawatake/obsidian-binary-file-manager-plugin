@@ -18,10 +18,12 @@ import { AppExtension } from './uncover';
 
 interface MyPluginSettings {
 	mySetting: string;
+	extensions: string[];
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
+	extensions: ['png', 'jpg', 'jpeg', 'pdf', 'git'],
 };
 
 const VALID_EXTENSIONS: string[] = ['png', 'jpg', 'jpeg', 'pdf', 'git'];
@@ -224,7 +226,7 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'Settings for my awesome plugin.' });
+		// containerEl.createEl('h2', { text: 'Settings for my awesome plugin.' });
 
 		new Setting(containerEl)
 			.setName('Setting #1')
@@ -239,5 +241,15 @@ class SampleSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		this.plugin.settings.extensions.forEach((ext, index) => {
+			new Setting(containerEl).setName(ext).addExtraButton((cb) => {
+				cb.setIcon('cross').onClick(() => {
+					this.plugin.settings.extensions.splice(index, 1);
+					this.plugin.saveSettings();
+					this.display();
+				});
+			});
+		});
 	}
 }
