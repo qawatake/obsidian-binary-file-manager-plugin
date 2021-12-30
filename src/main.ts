@@ -26,12 +26,12 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	extensions: ['png', 'jpg', 'jpeg', 'pdf', 'git'],
 };
 
-const VALID_EXTENSIONS: string[] = ['png', 'jpg', 'jpeg', 'pdf', 'git'];
-
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 
 	async onload() {
+		await this.loadSettings();
+
 		this.registerEvent(
 			this.app.vault.on('create', async (file: TAbstractFile) => {
 				if (!(await this.shouldCreateMetaFile(file))) {
@@ -47,8 +47,6 @@ export default class MyPlugin extends Plugin {
 
 		const command = await this.waitUntilCommandsFound();
 		console.log(command);
-
-		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon(
@@ -125,10 +123,7 @@ export default class MyPlugin extends Plugin {
 
 	onunload() {}
 
-	async shouldCreateMetaFile(
-		file: TAbstractFile,
-		extensions?: string[]
-	): Promise<boolean> {
+	async shouldCreateMetaFile(file: TAbstractFile): Promise<boolean> {
 		if (!(file instanceof TFile)) {
 			return false;
 		}
@@ -138,8 +133,7 @@ export default class MyPlugin extends Plugin {
 			return false;
 		}
 
-		const validExtensions = extensions ?? VALID_EXTENSIONS;
-		if (!validExtensions.includes(file.extension)) {
+		if (!this.settings.extensions.includes(file.extension)) {
 			return false;
 		}
 
