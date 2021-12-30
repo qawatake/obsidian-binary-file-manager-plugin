@@ -2,9 +2,9 @@ import {
 	App,
 	Command,
 	Editor,
-	KeymapContext,
 	MarkdownView,
 	Modal,
+	normalizePath,
 	Notice,
 	Plugin,
 	PluginSettingTab,
@@ -24,21 +24,19 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
 };
 
+const VALID_EXTENSIONS: string[] = ['png', 'jpg', 'jpeg', 'pdf', 'git'];
+
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 
 	async onload() {
 		this.registerEvent(
-			this.app.vault.on('create', (file: TAbstractFile) => {
-				if (file instanceof TFile) {
-					if (file.extension === 'png') {
-						console.log(file.name);
-						this.app.vault.create(
-							`info_of_${file.basename}.md`,
-							`ctime: ${file.stat.ctime}, mtime: ${file.stat.mtime}`
-						);
-					}
+			this.app.vault.on('create', async (file: TAbstractFile) => {
+				if (!(await this.shouldCreateMetaFile(file))) {
+					return;
 				}
+
+				this.createMetaFile(file as TFile);
 			})
 		);
 
@@ -124,6 +122,50 @@ export default class MyPlugin extends Plugin {
 	}
 
 	onunload() {}
+
+	async shouldCreateMetaFile(
+		file: TAbstractFile,
+		extensions?: string[]
+	): Promise<boolean> {
+		if (!(file instanceof TFile)) {
+			return false;
+		}
+
+		if (!file.extension) {
+			console.log('file.extension is undefined');
+			return false;
+		}
+
+		const validExtensions = extensions ?? VALID_EXTENSIONS;
+		if (!validExtensions.includes(file.extension)) {
+			return false;
+		}
+
+		const metaFileName = `metadata_of_${file.basename}.md`;
+		if (!metaFileName) {
+			console.log('metaFileName is undefined');
+		}
+
+		if (await this.app.vault.adapter.exists(normalizePath(metaFileName))) {
+			return false;
+		}
+		return true;
+	}
+
+	createMetaFile(file: TFile): void {
+		console.log(
+			`name: ${file.name}, ext: ${file.extension}, path: ${file.path}`
+		);
+		this.app.vault.create(
+			`metadata_of_${file.basename}.md`,
+			`---
+date: ${file.stat.ctime}
+---
+# Meta Data about ${file.name} #static
+![[${file.name}]]
+`
+		);
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(
