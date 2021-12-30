@@ -13,17 +13,20 @@ import {
 	TFile,
 } from 'obsidian';
 import { AppExtension } from './uncover';
+import { FolderSuggest } from 'suggesters/FolderSuggester';
 
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
 	mySetting: string;
 	extensions: string[];
+	folder: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
 	extensions: ['png', 'jpg', 'jpeg', 'pdf', 'git'],
+	folder: '/',
 };
 
 export default class MyPlugin extends Plugin {
@@ -34,11 +37,11 @@ export default class MyPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.vault.on('create', async (file: TAbstractFile) => {
-				if (!(await this.shouldCreateMetaFile(file))) {
+				if (!(await this.shouldCreateMetaDataFile(file))) {
 					return;
 				}
 
-				this.createMetaFile(file as TFile);
+				this.createMetaDataFile(file as TFile);
 			})
 		);
 
@@ -123,7 +126,7 @@ export default class MyPlugin extends Plugin {
 
 	onunload() {}
 
-	async shouldCreateMetaFile(file: TAbstractFile): Promise<boolean> {
+	async shouldCreateMetaDataFile(file: TAbstractFile): Promise<boolean> {
 		if (!(file instanceof TFile)) {
 			return false;
 		}
@@ -141,24 +144,23 @@ export default class MyPlugin extends Plugin {
 			return false;
 		}
 		const basename = file.name.split('.')[0];
-		const metaFileName = `metadata_of_${basename}.md`;
-		if (!metaFileName) {
-			console.log('metaFileName is undefined');
-		}
+		const metaDataFileName = `metadata_of_${basename}.md`;
 
-		if (await this.app.vault.adapter.exists(normalizePath(metaFileName))) {
+		if (
+			await this.app.vault.adapter.exists(normalizePath(metaDataFileName))
+		) {
 			return false;
 		}
 		return true;
 	}
 
-	createMetaFile(file: TFile): void {
+	createMetaDataFile(file: TFile): void {
 		const basename = file.name.split('.')[0];
-		console.log(
-			`name: ${file.name}, ext: ${file.extension}, path: ${file.path}`
+		const newpath = normalizePath(
+			`${this.settings.folder}/metadata_of_${basename}.md`
 		);
 		this.app.vault.create(
-			`metadata_of_${basename}.md`,
+			newpath,
 			`---
 date: ${file.stat.ctime}
 ---
@@ -228,18 +230,18 @@ class SampleSettingTab extends PluginSettingTab {
 		// containerEl.createEl('h2', { text: 'Settings for my awesome plugin.' });
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc("It's a secret")
-			.addText((text) =>
-				text
-					.setPlaceholder('Enter your secret')
-					.setValue(this.plugin.settings.mySetting)
-					.onChange(async (value) => {
-						console.log('Secret: ' + value);
-						this.plugin.settings.mySetting = value;
-						await this.plugin.saveSettings();
-					})
-			);
+			.setName('New file location')
+			.setDesc('New meta data file will be placed here')
+			.addSearch((component) => {
+				new FolderSuggest(this.app, component.inputEl);
+				component
+					.setPlaceholder('Example: folder1/folder2')
+					.setValue(this.plugin.settings.folder)
+					.onChange((newFolder) => {
+						this.plugin.settings.folder = newFolder;
+						this.plugin.saveSettings();
+					});
+			});
 
 		let extensionToBeAdded: string;
 		new Setting(containerEl)
