@@ -133,11 +133,15 @@ export default class MyPlugin extends Plugin {
 			return false;
 		}
 
-		if (!this.settings.extensions.includes(file.extension)) {
+		if (
+			!this.settings.extensions.some((ext) =>
+				file.name.endsWith(`.${ext}`)
+			)
+		) {
 			return false;
 		}
-
-		const metaFileName = `metadata_of_${file.basename}.md`;
+		const basename = file.name.split('.')[0];
+		const metaFileName = `metadata_of_${basename}.md`;
 		if (!metaFileName) {
 			console.log('metaFileName is undefined');
 		}
@@ -149,11 +153,12 @@ export default class MyPlugin extends Plugin {
 	}
 
 	createMetaFile(file: TFile): void {
+		const basename = file.name.split('.')[0];
 		console.log(
 			`name: ${file.name}, ext: ${file.extension}, path: ${file.path}`
 		);
 		this.app.vault.create(
-			`metadata_of_${file.basename}.md`,
+			`metadata_of_${basename}.md`,
 			`---
 date: ${file.stat.ctime}
 ---
