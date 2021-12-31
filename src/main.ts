@@ -10,6 +10,7 @@ import {
 	PluginSettingTab,
 	Setting,
 	TAbstractFile,
+	moment,
 	TFile,
 } from 'obsidian';
 import { AppExtension } from './uncover';
@@ -27,7 +28,7 @@ interface MyPluginSettings {
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	extensions: ['png', 'jpg', 'jpeg', 'pdf', 'git'],
 	folder: '/',
-	filenameFormat: 'INFO_{{BASENAME}}',
+	filenameFormat: 'INFO_{{BASENAME}}_{EXTENSION:UP}}',
 };
 
 export default class MyPlugin extends Plugin {
@@ -150,7 +151,8 @@ export default class MyPlugin extends Plugin {
 			`${this.settings.folder}/${Formatter.format(
 				this.settings.filenameFormat,
 				basename ?? '',
-				file.extension
+				file.extension,
+				file.stat.ctime / 1000
 			)}.md`
 		);
 
@@ -168,7 +170,8 @@ export default class MyPlugin extends Plugin {
 			`${this.settings.folder}/${Formatter.format(
 				this.settings.filenameFormat,
 				basename ?? '',
-				file.extension
+				file.extension,
+				file.stat.ctime / 1000
 			)}.md`
 		);
 		this.app.vault.create(
@@ -271,15 +274,15 @@ class SampleSettingTab extends PluginSettingTab {
 							newFormat
 						);
 
-						const { valid, included } = validFileName(
-							Formatter.format(newFormat, 'sample', 'png')
-						);
-						if (!valid) {
-							new Notice(
-								`File name must not include "${included}"`
-							);
-							return;
-						}
+						// const { valid, included } = validFileName(
+						// 	Formatter.format(newFormat, 'sample', 'png')
+						// );
+						// if (!valid) {
+						// 	new Notice(
+						// 		`File name must not include "${included}"`
+						// 	);
+						// 	return;
+						// }
 						this.plugin.settings.filenameFormat = newFormat;
 						this.plugin.saveSettings();
 					});
@@ -337,33 +340,38 @@ class SampleSettingTab extends PluginSettingTab {
 			createFragment((fragment) => {
 				fragment.appendText('Your current syntax looks like this: ');
 				fragment.createEl('b', {
-					text: Formatter.format(format, 'sample', 'png'),
+					text: Formatter.format(
+						format,
+						'sample',
+						'png',
+						moment.now() / 1000
+					),
 				});
 			})
 		);
 	}
 }
 
-const INVALID_CHARS_IN_FILE_NAME = [
-	'\\',
-	'/',
-	':',
-	'*',
-	'?',
-	'"',
-	'<',
-	'>',
-	'|',
-];
-function validFileName(fileName: string): {
-	valid: boolean;
-	included?: string;
-} {
-	for (const char of fileName) {
-		if (INVALID_CHARS_IN_FILE_NAME.includes(char)) {
-			return { valid: false, included: char };
-		}
-	}
+// const INVALID_CHARS_IN_FILE_NAME = [
+// 	'\\',
+// 	'/',
+// 	':',
+// 	'*',
+// 	'?',
+// 	'"',
+// 	'<',
+// 	'>',
+// 	'|',
+// ];
+// function validFileName(fileName: string): {
+// 	valid: boolean;
+// 	included?: string;
+// } {
+// 	for (const char of fileName) {
+// 		if (INVALID_CHARS_IN_FILE_NAME.includes(char)) {
+// 			return { valid: false, included: char };
+// 		}
+// 	}
 
-	return { valid: true };
-}
+// 	return { valid: true };
+// }

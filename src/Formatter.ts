@@ -1,24 +1,29 @@
-import dayjs from 'dayjs';
+import { moment } from 'obsidian';
 const DATE_REGEXP = /{{CDATE:([^}\n\r]*)}}/;
 const BASENAME_REGEX = /{{BASENAME(((:UP)|(:LOW))?)}}/;
 const FULLNAME_REGEX = /{{FULLNAME(((:UP)|(:LOW))?)}}/;
 const EXTENSION_REGEX = /{{EXTENSION(((:UP)|(:LOW))?)}}/;
 
 export class Formatter {
-	static format(input: string, basename: string, extension: string): string {
+	static format(
+		input: string,
+		basename: string,
+		extension: string,
+		unixSecond: number
+	): string {
 		let output = input;
-		output = this.replaceDate(output);
+		output = this.replaceDate(output, unixSecond);
 		output = this.replaceFullName(output, `${basename}.${extension}`);
 		output = this.replaceBaseName(output, basename);
 		output = this.replaceExtension(output, extension);
 		return output;
 	}
 
-	private static replaceDate(input: string): string {
+	private static replaceDate(input: string, unixSecond: number): string {
 		const output = input.replace(
 			DATE_REGEXP,
 			(_matched: string, fmt: string): string => {
-				return dayjs().format(fmt);
+				return moment.unix(unixSecond).format(fmt);
 			}
 		);
 		return output;
