@@ -1,12 +1,4 @@
-import {
-	Command,
-	normalizePath,
-	Notice,
-	Plugin,
-	TAbstractFile,
-	TFile,
-} from 'obsidian';
-import { AppExtension } from './uncover';
+import { normalizePath, Notice, Plugin, TAbstractFile, TFile } from 'obsidian';
 import { Formatter } from 'Formatter';
 import { TemplaterAdapter } from 'TemplaterAdapter';
 import { SampleSettingTab } from 'Setting';
@@ -56,9 +48,6 @@ export default class MyPlugin extends Plugin {
 				this.saveSettings();
 			})
 		);
-
-		const app = this.app as AppExtension;
-		console.log(app);
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this));
