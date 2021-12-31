@@ -63,7 +63,6 @@ export class Formatter {
 		return input.replace(
 			EXTENSION_REGEX,
 			(_matched: string, caseMode: string): string => {
-				console.log(caseMode);
 				if (!caseMode) {
 					return extension;
 				} else if (caseMode == ':UP') {
