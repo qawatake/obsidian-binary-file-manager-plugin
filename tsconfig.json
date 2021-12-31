@@ -34,7 +34,9 @@
 		"noPropertyAccessFromIndexSignature": true /* Enforces using indexed accessors for keys declared using an indexed type */,
 
 		/* Completeness */
-		"skipLibCheck": true /* Skip type checking all .d.ts files. */
+		"skipLibCheck": true /* Skip type checking all .d.ts files. */,
+
+		"esModuleInterop": true /* for dayjs */
 	},
 	"include": ["src/*.ts"],
 	"exclude": ["node_modules"]
