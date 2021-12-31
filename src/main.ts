@@ -26,6 +26,7 @@ interface MyPluginSettings {
 	folder: string;
 	filenameFormat: string;
 	templateFile: string;
+	registeredStaticFiles: string[];
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -33,14 +34,20 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	folder: '/',
 	filenameFormat: 'INFO_{{BASENAME}}_{EXTENSION:UP}}',
 	templateFile: '/',
+	registeredStaticFiles: [],
 };
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
+	private registeredStaticFiles: Set<string>;
 	tpAPI: TemplaterAdapter = new TemplaterAdapter();
 
 	async onload() {
 		await this.loadSettings();
+
+		this.registeredStaticFiles = new Set<string>(
+			this.settings.registeredStaticFiles
+		);
 
 		this.registerEvent(
 			this.app.vault.on('create', async (file: TAbstractFile) => {
@@ -54,6 +61,9 @@ export default class MyPlugin extends Plugin {
 					(file as TFile).stat.ctime
 				);
 				this.createMetaDataFile(file as TFile);
+				this.registeredStaticFiles.add(file.name);
+				this.settings.registeredStaticFiles.push(file.name);
+				this.saveSettings();
 			})
 		);
 
@@ -153,6 +163,10 @@ export default class MyPlugin extends Plugin {
 				file.name.endsWith(`.${ext}`)
 			)
 		) {
+			return false;
+		}
+
+		if (this.registeredStaticFiles.has(file.name)) {
 			return false;
 		}
 
