@@ -16,6 +16,7 @@ import {
 import { AppExtension } from './uncover';
 import { FolderSuggest } from 'suggesters/FolderSuggester';
 import { Formatter } from 'Formatter';
+import { FileSuggest } from 'FileSuggester';
 
 // Remember to rename these classes and interfaces!
 
@@ -23,12 +24,14 @@ interface MyPluginSettings {
 	extensions: string[];
 	folder: string;
 	filenameFormat: string;
+	templateFile: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	extensions: ['png', 'jpg', 'jpeg', 'pdf', 'git'],
 	folder: '/',
 	filenameFormat: 'INFO_{{BASENAME}}_{EXTENSION:UP}}',
+	templateFile: '/',
 };
 
 export default class MyPlugin extends Plugin {
@@ -293,11 +296,24 @@ class SampleSettingTab extends PluginSettingTab {
 			);
 		});
 
+		new Setting(containerEl)
+			.setName('Template file location')
+			.addSearch((component) => {
+				new FileSuggest(this.app, component.inputEl);
+				component
+					.setPlaceholder('Example: folder1/note')
+					.setValue(this.plugin.settings.templateFile)
+					.onChange((newTemplateFile) => {
+						this.plugin.settings.templateFile = newTemplateFile;
+						this.plugin.saveSettings();
+					});
+			});
+
 		let extensionToBeAdded: string;
 		new Setting(containerEl)
-			.setName('Add extension to be watched')
+			.setName('Extension to be watched')
 			.addText((text) =>
-				text.setPlaceholder('Example: pdf)').onChange((value) => {
+				text.setPlaceholder('Example: pdf').onChange((value) => {
 					extensionToBeAdded = value.trim().replace(/^\./, '');
 				})
 			)
