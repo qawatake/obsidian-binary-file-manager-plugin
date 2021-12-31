@@ -17,6 +17,7 @@ import { AppExtension } from './uncover';
 import { FolderSuggest } from 'suggesters/FolderSuggester';
 import { Formatter } from 'Formatter';
 import { FileSuggest } from 'FileSuggester';
+import { TemplaterAdapter } from 'TemplaterAdapter';
 
 // Remember to rename these classes and interfaces!
 
@@ -36,6 +37,7 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
+	tpAPI: TemplaterAdapter = new TemplaterAdapter();
 
 	async onload() {
 		await this.loadSettings();
@@ -45,7 +47,17 @@ export default class MyPlugin extends Plugin {
 				if (!(await this.shouldCreateMetaDataFile(file))) {
 					return;
 				}
-
+				const metaDataFileName = `${Formatter.format(
+					this.settings.filenameFormat,
+					(file as TFile).basename ?? '',
+					(file as TFile).extension,
+					(file as TFile).stat.ctime / 1000
+				)}.md`;
+				this.tpAPI.setNewArg(
+					metaDataFileName,
+					file.name,
+					(file as TFile).stat.ctime
+				);
 				this.createMetaDataFile(file as TFile);
 			})
 		);
@@ -167,7 +179,7 @@ export default class MyPlugin extends Plugin {
 		return true;
 	}
 
-	createMetaDataFile(file: TFile): void {
+	async createMetaDataFile(file: TFile): Promise<void> {
 		const basename = file.name.split('.')[0];
 		const newpath = normalizePath(
 			`${this.settings.folder}/${Formatter.format(
@@ -177,15 +189,15 @@ export default class MyPlugin extends Plugin {
 				file.stat.ctime / 1000
 			)}.md`
 		);
-		this.app.vault.create(
-			newpath,
-			`---
-date: ${file.stat.ctime}
----
-# Meta Data about ${file.name} #static
-![[${file.name}]]
-`
+		const templateFile = this.app.vault.getAbstractFileByPath(
+			this.settings.templateFile
 		);
+		if (!(templateFile instanceof TFile)) {
+			console.log(this.settings.templateFile);
+			new Notice(`Template file ${templateFile} is invalid`);
+			return;
+		}
+		this.app.vault.create(newpath, await this.app.vault.read(templateFile));
 	}
 
 	async loadSettings() {
