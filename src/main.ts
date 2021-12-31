@@ -255,9 +255,8 @@ class SampleSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
-			.setName('File name format')
-			.addText((component) => {
+		new Setting(containerEl).setName('File name format').then((setting) => {
+			setting.addText((component) => {
 				component
 					.setValue(this.plugin.settings.filenameFormat)
 					.onChange((input) => {
@@ -268,8 +267,11 @@ class SampleSettingTab extends PluginSettingTab {
 						}
 						this.plugin.settings.filenameFormat = newFormat;
 						this.plugin.saveSettings();
+						this.displaySampleFileFormatDesc(setting.descEl);
 					});
 			});
+			this.displaySampleFileFormatDesc(setting.descEl);
+		});
 
 		let extensionToBeAdded: string;
 		new Setting(containerEl)
@@ -312,5 +314,21 @@ class SampleSettingTab extends PluginSettingTab {
 				});
 			});
 		});
+	}
+
+	displaySampleFileFormatDesc(descEl: HTMLElement): void {
+		descEl.empty();
+		descEl.appendChild(
+			createFragment((fragment) => {
+				fragment.appendText('Your current syntax looks like this: ');
+				fragment.createEl('b', {
+					text: Formatter.format(
+						this.plugin.settings.filenameFormat,
+						'sample',
+						'png'
+					),
+				});
+			})
+		);
 	}
 }
