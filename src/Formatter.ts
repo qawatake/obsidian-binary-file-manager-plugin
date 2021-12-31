@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
-const DATE_REGEXP = /{{DATE:([^}\n\r]*)}}/;
-const BASENAME_SYNTAX = '{{BASENAME}}';
-const FULLNAME_SYNTAX = '{{FULLNAME}}';
-const EXTENSION_SYNTAX = '{{EXTENSION}}';
+const DATE_REGEXP = /{{CDATE:([^}\n\r]*)}}/;
+const BASENAME_REGEX = /{{BASENAME(((:UP)|(:LOW))?)}}/;
+const FULLNAME_REGEX = /{{FULLNAME(((:UP)|(:LOW))?)}}/;
+const EXTENSION_REGEX = /{{EXTENSION(((:UP)|(:LOW))?)}}/;
 
 export class Formatter {
 	static format(input: string, basename: string, extension: string): string {
@@ -25,14 +25,48 @@ export class Formatter {
 	}
 
 	private static replaceFullName(input: string, fullname: string): string {
-		return input.replace(FULLNAME_SYNTAX, fullname);
+		return input.replace(
+			FULLNAME_REGEX,
+			(_matched: string, caseMode: string): string => {
+				if (!caseMode) {
+					return fullname;
+				} else if (caseMode == ':UP') {
+					return fullname.toUpperCase();
+				} else {
+					return fullname.toLowerCase();
+				}
+			}
+		);
 	}
 
 	private static replaceBaseName(input: string, basename: string): string {
-		return input.replace(BASENAME_SYNTAX, basename);
+		return input.replace(
+			BASENAME_REGEX,
+			(_matched: string, caseMode: string): string => {
+				if (!caseMode) {
+					return basename;
+				} else if (caseMode == ':UP') {
+					return basename.toUpperCase();
+				} else {
+					return basename.toLowerCase();
+				}
+			}
+		);
 	}
 
 	private static replaceExtension(input: string, extension: string): string {
-		return input.replace(EXTENSION_SYNTAX, extension);
+		return input.replace(
+			EXTENSION_REGEX,
+			(_matched: string, caseMode: string): string => {
+				console.log(caseMode);
+				if (!caseMode) {
+					return extension;
+				} else if (caseMode == ':UP') {
+					return extension.toUpperCase();
+				} else {
+					return extension.toLowerCase();
+				}
+			}
+		);
 	}
 }
