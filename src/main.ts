@@ -265,23 +265,38 @@ class SampleSettingTab extends PluginSettingTab {
 							new Notice('File name format must not be blanck');
 							return;
 						}
+						// display sample file name before validation
+						this.displaySampleFileNameDesc(
+							setting.descEl,
+							newFormat
+						);
+
+						const { valid, included } = validFileName(
+							Formatter.format(newFormat, 'sample', 'png')
+						);
+						if (!valid) {
+							new Notice(
+								`File name must not include "${included}"`
+							);
+							return;
+						}
 						this.plugin.settings.filenameFormat = newFormat;
 						this.plugin.saveSettings();
-						this.displaySampleFileFormatDesc(setting.descEl);
 					});
 			});
-			this.displaySampleFileFormatDesc(setting.descEl);
+			this.displaySampleFileNameDesc(
+				setting.descEl,
+				this.plugin.settings.filenameFormat
+			);
 		});
 
 		let extensionToBeAdded: string;
 		new Setting(containerEl)
 			.setName('Add extension to be watched')
 			.addText((text) =>
-				text
-					.setPlaceholder('Extension (e.g., pdf)')
-					.onChange((value) => {
-						extensionToBeAdded = value.trim().replace(/^\./, '');
-					})
+				text.setPlaceholder('Example: pdf)').onChange((value) => {
+					extensionToBeAdded = value.trim().replace(/^\./, '');
+				})
 			)
 			.addButton((cb) => {
 				cb.setButtonText('Add').onClick(async () => {
@@ -316,19 +331,39 @@ class SampleSettingTab extends PluginSettingTab {
 		});
 	}
 
-	displaySampleFileFormatDesc(descEl: HTMLElement): void {
+	displaySampleFileNameDesc(descEl: HTMLElement, format: string): void {
 		descEl.empty();
 		descEl.appendChild(
 			createFragment((fragment) => {
 				fragment.appendText('Your current syntax looks like this: ');
 				fragment.createEl('b', {
-					text: Formatter.format(
-						this.plugin.settings.filenameFormat,
-						'sample',
-						'png'
-					),
+					text: Formatter.format(format, 'sample', 'png'),
 				});
 			})
 		);
 	}
+}
+
+const INVALID_CHARS_IN_FILE_NAME = [
+	'\\',
+	'/',
+	':',
+	'*',
+	'?',
+	'"',
+	'<',
+	'>',
+	'|',
+];
+function validFileName(fileName: string): {
+	valid: boolean;
+	included?: string;
+} {
+	for (const char of fileName) {
+		if (INVALID_CHARS_IN_FILE_NAME.includes(char)) {
+			return { valid: false, included: char };
+		}
+	}
+
+	return { valid: true };
 }
