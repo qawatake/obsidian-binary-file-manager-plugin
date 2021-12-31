@@ -47,14 +47,9 @@ export default class MyPlugin extends Plugin {
 				if (!(await this.shouldCreateMetaDataFile(file))) {
 					return;
 				}
-				const metaDataFileName = `${Formatter.format(
-					this.settings.filenameFormat,
-					(file as TFile).basename ?? '',
-					(file as TFile).extension,
-					(file as TFile).stat.ctime / 1000
-				)}.md`;
+
 				this.tpAPI.setNewArg(
-					metaDataFileName,
+					this.generateMetaDataFileName(file as TFile),
 					file.name,
 					(file as TFile).stat.ctime
 				);
@@ -161,34 +156,32 @@ export default class MyPlugin extends Plugin {
 			return false;
 		}
 
-		const basename = file.name.split('.')[0];
 		const metaDataFilePath = normalizePath(
-			`${this.settings.folder}/${Formatter.format(
-				this.settings.filenameFormat,
-				basename ?? '',
-				file.extension,
-				file.stat.ctime / 1000
-			)}.md`
+			`${this.settings.folder}/${this.generateMetaDataFileName(file)}`
 		);
 
-		if (
-			await this.app.vault.adapter.exists(normalizePath(metaDataFilePath))
-		) {
+		if (await this.app.vault.adapter.exists(metaDataFilePath)) {
 			return false;
 		}
 		return true;
 	}
 
-	async createMetaDataFile(file: TFile): Promise<void> {
+	generateMetaDataFileName(file: TFile): string {
 		const basename = file.name.split('.')[0];
-		const newpath = normalizePath(
-			`${this.settings.folder}/${Formatter.format(
-				this.settings.filenameFormat,
-				basename ?? '',
-				file.extension,
-				file.stat.ctime / 1000
-			)}.md`
+		const metaDataFileName = `${Formatter.format(
+			this.settings.filenameFormat,
+			basename ?? '',
+			file.extension,
+			file.stat.ctime / 1000
+		)}.md`;
+		return metaDataFileName;
+	}
+
+	async createMetaDataFile(file: TFile): Promise<void> {
+		const metaDataFilePath = normalizePath(
+			`${this.settings.folder}/${this.generateMetaDataFileName(file)}`
 		);
+
 		const templateFile = this.app.vault.getAbstractFileByPath(
 			this.settings.templateFile
 		);
@@ -197,7 +190,10 @@ export default class MyPlugin extends Plugin {
 			new Notice(`Template file ${templateFile} is invalid`);
 			return;
 		}
-		this.app.vault.create(newpath, await this.app.vault.read(templateFile));
+		this.app.vault.create(
+			metaDataFilePath,
+			await this.app.vault.read(templateFile)
+		);
 	}
 
 	async loadSettings() {
