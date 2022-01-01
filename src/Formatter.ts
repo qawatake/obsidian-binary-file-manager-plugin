@@ -19,11 +19,11 @@ export class Formatter {
 		return output;
 	}
 
-	private static replaceDate(input: string, unixSecond: number): string {
+	private static replaceDate(input: string, unixMilli: number): string {
 		const output = input.replace(
 			DATE_REGEXP,
 			(_matched: string, fmt: string): string => {
-				return moment.unix(unixSecond).format(fmt);
+				return moment(unixMilli).format(fmt);
 			}
 		);
 		return output;

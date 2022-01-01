@@ -93,7 +93,7 @@ export default class MyPlugin extends Plugin {
 			this.settings.filenameFormat,
 			basename ?? '',
 			file.extension,
-			file.stat.ctime / 1000
+			file.stat.ctime
 		)}.md`;
 		return metaDataFileName;
 	}

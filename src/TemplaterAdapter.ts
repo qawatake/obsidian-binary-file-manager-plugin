@@ -1,4 +1,4 @@
-import * as moment from 'moment';
+import { moment } from 'obsidian';
 
 export class TemplaterAdapter {
 	templaterArgMap: Map<string, TemplaterArgs> = new Map();
@@ -11,7 +11,7 @@ export class TemplaterAdapter {
 		if (!createdAt) {
 			return undefined;
 		}
-		return moment.unix(createdAt / 1000);
+		return moment(createdAt);
 	}
 
 	staticFileName(metaDataFileName: string): string | undefined {
