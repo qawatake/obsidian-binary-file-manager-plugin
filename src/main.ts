@@ -31,6 +31,10 @@ export default class MyPlugin extends Plugin {
 			this.settings.registeredStaticFiles
 		);
 
+		this.app.workspace.onLayoutReady(() =>
+			this.unregisterNonExistingStaticFiles()
+		);
+
 		this.registerEvent(
 			this.app.vault.on('create', async (file: TAbstractFile) => {
 				if (!(await this.shouldCreateMetaDataFile(file))) {
@@ -45,7 +49,7 @@ export default class MyPlugin extends Plugin {
 				await this.createMetaDataFile(file as TFile);
 				this.registeredStaticFiles.add(file.name);
 				this.settings.registeredStaticFiles.push(file.name);
-				this.saveSettings();
+				await this.saveSettings();
 			})
 		);
 
@@ -105,6 +109,20 @@ export default class MyPlugin extends Plugin {
 
 	async unregisterStaticFile(file: TFile): Promise<void> {
 		this.registeredStaticFiles.delete(file.name);
+		this.settings.registeredStaticFiles = Array.from(
+			this.registeredStaticFiles
+		);
+		await this.saveSettings();
+	}
+
+	async unregisterNonExistingStaticFiles() {
+		const difference = new Set(this.registeredStaticFiles);
+		for (const file of this.app.vault.getFiles()) {
+			difference.delete(file.name);
+		}
+		for (const fileToBeUnregistered of difference) {
+			this.registeredStaticFiles.delete(fileToBeUnregistered);
+		}
 		this.settings.registeredStaticFiles = Array.from(
 			this.registeredStaticFiles
 		);
