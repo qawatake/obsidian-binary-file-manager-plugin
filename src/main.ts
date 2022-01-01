@@ -49,6 +49,15 @@ export default class MyPlugin extends Plugin {
 			})
 		);
 
+		this.registerEvent(
+			this.app.vault.on('delete', async (file: TAbstractFile) => {
+				if (!this.shouldUnregisterStaticFile(file)) {
+					return;
+				}
+				await this.unregisterStaticFile(file as TFile);
+			})
+		);
+
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 	}
@@ -85,6 +94,21 @@ export default class MyPlugin extends Plugin {
 			return false;
 		}
 		return true;
+	}
+
+	shouldUnregisterStaticFile(file: TAbstractFile): boolean {
+		if (!(file instanceof TFile)) {
+			return false;
+		}
+		return this.registeredStaticFiles.has(file.name);
+	}
+
+	async unregisterStaticFile(file: TFile): Promise<void> {
+		this.registeredStaticFiles.delete(file.name);
+		this.settings.registeredStaticFiles = Array.from(
+			this.registeredStaticFiles
+		);
+		await this.saveSettings();
 	}
 
 	generateMetaDataFileName(file: TFile): string {
