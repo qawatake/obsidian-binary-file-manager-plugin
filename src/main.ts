@@ -195,22 +195,48 @@ export default class MyPlugin extends Plugin {
 			new Notice(`Template file ${templateFile} is invalid`);
 			return;
 		}
-		this.app.vault.create(
-			metaDataFilePath,
-			Formatter.format(
-				await this.app.vault.read(templateFile),
-				staticFile.path,
-				staticFile.stat.ctime
-			)
-		);
+
+		// process by Templater
+		const templaterPlugin = await this.getTemplaterPlugin();
+		if (!(this.settings.useTemplater && templaterPlugin)) {
+			this.app.vault.create(
+				metaDataFilePath,
+				Formatter.format(
+					await this.app.vault.read(templateFile),
+					staticFile.path,
+					staticFile.stat.ctime
+				)
+			);
+		} else {
+			const targetFile = await this.app.vault.create(
+				metaDataFilePath,
+				''
+			);
+
+			try {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				const content = await templaterPlugin.templater.parse_template(
+					{ target_file: targetFile, run_mode: 4 },
+					Formatter.format(
+						await this.app.vault.read(templateFile),
+						staticFile.path,
+						staticFile.stat.ctime
+					)
+				);
+				this.app.vault.modify(targetFile, content);
+			} catch (err) {
+				new Notice(
+					'ERROR in Static File Manager Plugin: failed to connect to Templater. Your Templater version may not be supported'
+				);
+				console.log(err);
+			}
+		}
 	}
 
-	async hasTemplaterPlugin(): Promise<boolean> {
+	async getTemplaterPlugin(): Promise<Plugin | undefined> {
 		const app = this.app as UncoveredApp;
-		return Object.prototype.hasOwnProperty.call(
-			app.plugins.plugins,
-			TEMPLATER_PLUGIN_NAME
-		);
+		return app.plugins.plugins[TEMPLATER_PLUGIN_NAME];
 	}
 
 	async loadSettings() {
