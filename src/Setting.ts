@@ -70,6 +70,17 @@ export class SampleSettingTab extends PluginSettingTab {
 					});
 			});
 
+		new Setting(containerEl)
+			.setName('Use Templater')
+			.addToggle(async (component) => {
+				component
+					.setValue(this.plugin.settings.useTemplater)
+					.onChange((value) => {
+						this.plugin.settings.useTemplater = value;
+						this.plugin.saveSettings();
+					});
+			});
+
 		let extensionToBeAdded: string;
 		new Setting(containerEl)
 			.setName('Extension to be watched')

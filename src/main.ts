@@ -9,12 +9,14 @@ import {
 import { Formatter } from 'Formatter';
 import { TemplaterAdapter } from 'TemplaterAdapter';
 import { SampleSettingTab } from 'Setting';
+import { UncoveredApp } from 'Uncover';
 
 interface MyPluginSettings {
 	extensions: string[];
 	folder: string;
 	filenameFormat: string;
 	templateFile: string;
+	useTemplater: boolean;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -22,10 +24,12 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	folder: '/',
 	filenameFormat: 'INFO_{{NAME}}_{EXTENSION:UP}}',
 	templateFile: '/',
+	useTemplater: false,
 };
 
 const PLUGIN_NAME = 'obsidian-static-file-manager-plugin';
 const REGISTERED_STATIC_FILE_STORAGE_FILE_NAME = '.static_file_list.txt';
+const TEMPLATER_PLUGIN_NAME = 'templater-obsidian';
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
@@ -34,6 +38,7 @@ export default class MyPlugin extends Plugin {
 
 	override async onload() {
 		await this.loadSettings();
+		console.log(this.app);
 
 		this.loadRegisteredStaticFiles();
 
@@ -197,6 +202,14 @@ export default class MyPlugin extends Plugin {
 				staticFile.path,
 				staticFile.stat.ctime
 			)
+		);
+	}
+
+	async hasTemplaterPlugin(): Promise<boolean> {
+		const app = this.app as UncoveredApp;
+		return Object.prototype.hasOwnProperty.call(
+			app.plugins.plugins,
+			TEMPLATER_PLUGIN_NAME
 		);
 	}
 
