@@ -1,4 +1,11 @@
-import { normalizePath, Notice, Plugin, TAbstractFile, TFile } from 'obsidian';
+import {
+	normalizePath,
+	Notice,
+	Plugin,
+	TAbstractFile,
+	TFile,
+	moment,
+} from 'obsidian';
 import { Formatter } from 'Formatter';
 import { TemplaterAdapter } from 'TemplaterAdapter';
 import { SampleSettingTab } from 'Setting';
@@ -40,15 +47,19 @@ export default class MyPlugin extends Plugin {
 					return;
 				}
 
+				const metaDataFileName = await this.uniquefyMetaDataFileName(
+					this.generateMetaDataFileName(file as TFile)
+				);
+				const metaDataFilePath = `${this.settings.folder}/${metaDataFileName}`;
+
 				this.tpAPI.setNewArg(
-					this.generateMetaDataFileName(file as TFile),
+					metaDataFileName,
 					file.name,
 					(file as TFile).stat.ctime
 				);
-				await this.createMetaDataFile(file as TFile);
+				await this.createMetaDataFile(metaDataFilePath);
 				this.registeredStaticFiles.add(file.name);
 				await this.saveRegisteredStaticFiles();
-				await this.saveSettings();
 			})
 		);
 
@@ -118,13 +129,6 @@ export default class MyPlugin extends Plugin {
 			return false;
 		}
 
-		const metaDataFilePath = normalizePath(
-			`${this.settings.folder}/${this.generateMetaDataFileName(file)}`
-		);
-
-		if (await this.app.vault.adapter.exists(metaDataFilePath)) {
-			return false;
-		}
 		return true;
 	}
 
@@ -162,11 +166,20 @@ export default class MyPlugin extends Plugin {
 		return metaDataFileName;
 	}
 
-	async createMetaDataFile(file: TFile): Promise<void> {
+	async uniquefyMetaDataFileName(metaDataFileName: string): Promise<string> {
 		const metaDataFilePath = normalizePath(
-			`${this.settings.folder}/${this.generateMetaDataFileName(file)}`
+			`${this.settings.folder}/${metaDataFileName}`
 		);
+		if (await this.app.vault.adapter.exists(metaDataFilePath)) {
+			return `CONFLICT-${moment().format(
+				'YYYY-MM-DD-hh-mm-ss'
+			)}-${metaDataFileName}`;
+		} else {
+			return metaDataFileName;
+		}
+	}
 
+	async createMetaDataFile(metaDataFilePath: string): Promise<void> {
 		const templateFile = this.app.vault.getAbstractFileByPath(
 			this.settings.templateFile
 		);
