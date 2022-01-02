@@ -11,7 +11,7 @@ import { TemplaterAdapter } from 'TemplaterAdapter';
 import { SampleSettingTab } from 'Setting';
 import { UncoveredApp } from 'Uncover';
 
-interface MyPluginSettings {
+interface Settings {
 	extensions: string[];
 	folder: string;
 	filenameFormat: string;
@@ -19,8 +19,26 @@ interface MyPluginSettings {
 	useTemplater: boolean;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	extensions: ['png', 'jpg', 'jpeg', 'pdf', 'git'],
+const DEFAULT_SETTINGS: Settings = {
+	extensions: [
+		'png',
+		'jpg',
+		'jpeg',
+		'gif',
+		'bmp',
+		'svg',
+		'mp3',
+		'webm',
+		'wav',
+		'm4a',
+		'ogg',
+		'3gp',
+		'flac',
+		'mp4',
+		'webm',
+		'ogv',
+		'pdf',
+	],
 	folder: '/',
 	filenameFormat: 'INFO_{{NAME}}_{EXTENSION:UP}}',
 	templateFile: '/',
@@ -31,8 +49,8 @@ const PLUGIN_NAME = 'obsidian-static-file-manager-plugin';
 const REGISTERED_STATIC_FILE_STORAGE_FILE_NAME = '.static_file_list.txt';
 const TEMPLATER_PLUGIN_NAME = 'templater-obsidian';
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class StaticFileManagerPlugin extends Plugin {
+	settings: Settings;
 	private registeredStaticFiles: Set<string>;
 	tpAPI: TemplaterAdapter = new TemplaterAdapter();
 
@@ -84,7 +102,7 @@ export default class MyPlugin extends Plugin {
 
 	// onunload() {}
 
-	async loadRegisteredStaticFiles() {
+	private async loadRegisteredStaticFiles() {
 		const configDir = this.app.vault.configDir;
 		const storageFilePath = normalizePath(
 			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_STATIC_FILE_STORAGE_FILE_NAME}`
@@ -101,7 +119,7 @@ export default class MyPlugin extends Plugin {
 		this.registeredStaticFiles = new Set<string>(staticFiles);
 	}
 
-	async saveRegisteredStaticFiles() {
+	private async saveRegisteredStaticFiles() {
 		const configDir = this.app.vault.configDir;
 		const storageFilePath = normalizePath(
 			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_STATIC_FILE_STORAGE_FILE_NAME}`
@@ -113,7 +131,9 @@ export default class MyPlugin extends Plugin {
 		);
 	}
 
-	async shouldCreateMetaDataFile(file: TAbstractFile): Promise<boolean> {
+	private async shouldCreateMetaDataFile(
+		file: TAbstractFile
+	): Promise<boolean> {
 		if (!(file instanceof TFile)) {
 			return false;
 		}
@@ -138,19 +158,19 @@ export default class MyPlugin extends Plugin {
 		return true;
 	}
 
-	shouldUnregisterStaticFile(file: TAbstractFile): boolean {
+	private shouldUnregisterStaticFile(file: TAbstractFile): boolean {
 		if (!(file instanceof TFile)) {
 			return false;
 		}
 		return this.registeredStaticFiles.has(file.name);
 	}
 
-	async unregisterStaticFile(file: TFile): Promise<void> {
+	private async unregisterStaticFile(file: TFile): Promise<void> {
 		this.registeredStaticFiles.delete(file.name);
 		await this.saveRegisteredStaticFiles();
 	}
 
-	async unregisterNonExistingStaticFiles() {
+	private async unregisterNonExistingStaticFiles() {
 		const difference = new Set(this.registeredStaticFiles);
 		for (const file of this.app.vault.getFiles()) {
 			difference.delete(file.name);
@@ -161,7 +181,7 @@ export default class MyPlugin extends Plugin {
 		this.saveRegisteredStaticFiles();
 	}
 
-	generateMetaDataFileName(file: TFile): string {
+	private generateMetaDataFileName(file: TFile): string {
 		const metaDataFileName = `${Formatter.format(
 			this.settings.filenameFormat,
 			file.path,
@@ -170,7 +190,9 @@ export default class MyPlugin extends Plugin {
 		return metaDataFileName;
 	}
 
-	async uniquefyMetaDataFileName(metaDataFileName: string): Promise<string> {
+	private async uniquefyMetaDataFileName(
+		metaDataFileName: string
+	): Promise<string> {
 		const metaDataFilePath = normalizePath(
 			`${this.settings.folder}/${metaDataFileName}`
 		);
@@ -183,7 +205,7 @@ export default class MyPlugin extends Plugin {
 		}
 	}
 
-	async createMetaDataFile(
+	private async createMetaDataFile(
 		metaDataFilePath: string,
 		staticFile: TFile
 	): Promise<void> {
@@ -234,7 +256,7 @@ export default class MyPlugin extends Plugin {
 		}
 	}
 
-	async getTemplaterPlugin(): Promise<Plugin | undefined> {
+	private async getTemplaterPlugin(): Promise<Plugin | undefined> {
 		const app = this.app as UncoveredApp;
 		return app.plugins.plugins[TEMPLATER_PLUGIN_NAME];
 	}
