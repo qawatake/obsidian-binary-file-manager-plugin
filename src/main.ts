@@ -20,7 +20,7 @@ interface MyPluginSettings {
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	extensions: ['png', 'jpg', 'jpeg', 'pdf', 'git'],
 	folder: '/',
-	filenameFormat: 'INFO_{{BASENAME}}_{EXTENSION:UP}}',
+	filenameFormat: 'INFO_{{NAME}}_{EXTENSION:UP}}',
 	templateFile: '/',
 };
 
@@ -57,7 +57,7 @@ export default class MyPlugin extends Plugin {
 					file.name,
 					(file as TFile).stat.ctime
 				);
-				await this.createMetaDataFile(metaDataFilePath);
+				await this.createMetaDataFile(metaDataFilePath, file as TFile);
 				this.registeredStaticFiles.add(file.name);
 				await this.saveRegisteredStaticFiles();
 			})
@@ -156,11 +156,9 @@ export default class MyPlugin extends Plugin {
 	}
 
 	generateMetaDataFileName(file: TFile): string {
-		const basename = file.name.split('.')[0];
 		const metaDataFileName = `${Formatter.format(
 			this.settings.filenameFormat,
-			basename ?? '',
-			file.extension,
+			file.path,
 			file.stat.ctime
 		)}.md`;
 		return metaDataFileName;
@@ -179,7 +177,10 @@ export default class MyPlugin extends Plugin {
 		}
 	}
 
-	async createMetaDataFile(metaDataFilePath: string): Promise<void> {
+	async createMetaDataFile(
+		metaDataFilePath: string,
+		staticFile: TFile
+	): Promise<void> {
 		const templateFile = this.app.vault.getAbstractFileByPath(
 			this.settings.templateFile
 		);
@@ -190,7 +191,11 @@ export default class MyPlugin extends Plugin {
 		}
 		this.app.vault.create(
 			metaDataFilePath,
-			await this.app.vault.read(templateFile)
+			Formatter.format(
+				await this.app.vault.read(templateFile),
+				staticFile.path,
+				staticFile.stat.ctime
+			)
 		);
 	}
 

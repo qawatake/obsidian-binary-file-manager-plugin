@@ -119,9 +119,8 @@ export class SampleSettingTab extends PluginSettingTab {
 				fragment.createEl('b', {
 					text: Formatter.format(
 						format,
-						'sample',
-						'png',
-						moment.now() / 1000
+						'folder/sample.png',
+						moment.now()
 					),
 				});
 			})
