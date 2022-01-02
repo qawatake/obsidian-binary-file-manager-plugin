@@ -1,6 +1,5 @@
 import { moment } from 'obsidian';
 import * as path from 'path';
-import { basename } from 'path/posix';
 const DATE_REGEXP = /{{CDATE:([^}\n\r]*)}}/;
 const NAME_REGEX = /{{NAME(((:UP)|(:LOW))?)}}/;
 const FULLNAME_REGEX = /{{FULLNAME(((:UP)|(:LOW))?)}}/;

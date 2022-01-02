@@ -58,8 +58,9 @@ export default class MyPlugin extends Plugin {
 					(file as TFile).stat.ctime
 				);
 				await this.createMetaDataFile(metaDataFilePath, file as TFile);
+				new Notice(`Meta data file of ${file.name} is created.`);
 				this.registeredStaticFiles.add(file.name);
-				await this.saveRegisteredStaticFiles();
+				this.saveRegisteredStaticFiles();
 			})
 		);
 
