@@ -8,7 +8,6 @@ interface MyPluginSettings {
 	folder: string;
 	filenameFormat: string;
 	templateFile: string;
-	registeredStaticFiles: string[];
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -16,24 +15,24 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	folder: '/',
 	filenameFormat: 'INFO_{{BASENAME}}_{EXTENSION:UP}}',
 	templateFile: '/',
-	registeredStaticFiles: [],
 };
+
+const PLUGIN_NAME = 'obsidian-static-file-manager-plugin';
+const REGISTERED_STATIC_FILE_STORAGE_FILE_NAME = '.static_file_list.txt';
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 	private registeredStaticFiles: Set<string>;
 	tpAPI: TemplaterAdapter = new TemplaterAdapter();
 
-	async onload() {
+	override async onload() {
 		await this.loadSettings();
 
-		this.registeredStaticFiles = new Set<string>(
-			this.settings.registeredStaticFiles
-		);
+		this.loadRegisteredStaticFiles();
 
-		this.app.workspace.onLayoutReady(() =>
-			this.unregisterNonExistingStaticFiles()
-		);
+		this.app.workspace.onLayoutReady(async () => {
+			this.unregisterNonExistingStaticFiles();
+		});
 
 		this.registerEvent(
 			this.app.vault.on('create', async (file: TAbstractFile) => {
@@ -48,7 +47,7 @@ export default class MyPlugin extends Plugin {
 				);
 				await this.createMetaDataFile(file as TFile);
 				this.registeredStaticFiles.add(file.name);
-				this.settings.registeredStaticFiles.push(file.name);
+				await this.saveRegisteredStaticFiles();
 				await this.saveSettings();
 			})
 		);
@@ -66,7 +65,36 @@ export default class MyPlugin extends Plugin {
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 	}
 
-	onunload() {}
+	// onunload() {}
+
+	async loadRegisteredStaticFiles() {
+		const configDir = this.app.vault.configDir;
+		const storageFilePath = normalizePath(
+			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_STATIC_FILE_STORAGE_FILE_NAME}`
+		);
+
+		if (!(await this.app.vault.adapter.exists(storageFilePath))) {
+			this.registeredStaticFiles = new Set<string>();
+			return;
+		}
+
+		const staticFiles = (await this.app.vault.adapter.read(storageFilePath))
+			.trim()
+			.split(/\r?\n/);
+		this.registeredStaticFiles = new Set<string>(staticFiles);
+	}
+
+	async saveRegisteredStaticFiles() {
+		const configDir = this.app.vault.configDir;
+		const storageFilePath = normalizePath(
+			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_STATIC_FILE_STORAGE_FILE_NAME}`
+		);
+
+		await this.app.vault.adapter.write(
+			storageFilePath,
+			Array.from(this.registeredStaticFiles).join('\n')
+		);
+	}
 
 	async shouldCreateMetaDataFile(file: TAbstractFile): Promise<boolean> {
 		if (!(file instanceof TFile)) {
@@ -109,10 +137,7 @@ export default class MyPlugin extends Plugin {
 
 	async unregisterStaticFile(file: TFile): Promise<void> {
 		this.registeredStaticFiles.delete(file.name);
-		this.settings.registeredStaticFiles = Array.from(
-			this.registeredStaticFiles
-		);
-		await this.saveSettings();
+		await this.saveRegisteredStaticFiles();
 	}
 
 	async unregisterNonExistingStaticFiles() {
@@ -123,10 +148,7 @@ export default class MyPlugin extends Plugin {
 		for (const fileToBeUnregistered of difference) {
 			this.registeredStaticFiles.delete(fileToBeUnregistered);
 		}
-		this.settings.registeredStaticFiles = Array.from(
-			this.registeredStaticFiles
-		);
-		await this.saveSettings();
+		this.saveRegisteredStaticFiles();
 	}
 
 	generateMetaDataFileName(file: TFile): string {
