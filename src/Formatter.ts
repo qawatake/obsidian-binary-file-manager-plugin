@@ -1,11 +1,11 @@
 import { moment } from 'obsidian';
 import * as path from 'path';
-const DATE_REGEXP = /{{CDATE:([^}\n\r]*)}}/;
-const NAME_REGEX = /{{NAME(((:UP)|(:LOW))?)}}/;
-const FULLNAME_REGEX = /{{FULLNAME(((:UP)|(:LOW))?)}}/;
-const EXTENSION_REGEX = /{{EXTENSION(((:UP)|(:LOW))?)}}/;
-const PATH_REGEX = /{{PATH(((:UP)|(:LOW))?)}}/;
-const NOW_REGEXP = /{{NOW:([^}\n\r]*)}}/;
+const DATE_REGEXP = /{{CDATE:([^}\n\r]*)}}/g;
+const NAME_REGEX = /{{NAME(((:UP)|(:LOW))?)}}/g;
+const FULLNAME_REGEX = /{{FULLNAME(((:UP)|(:LOW))?)}}/g;
+const EXTENSION_REGEX = /{{EXTENSION(((:UP)|(:LOW))?)}}/g;
+const PATH_REGEX = /{{PATH(((:UP)|(:LOW))?)}}/g;
+const NOW_REGEXP = /{{NOW:([^}\n\r]*)}}/g;
 
 export class Formatter {
 	static format(input: string, filepath: string, createdAt: number): string {

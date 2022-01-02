@@ -15,7 +15,7 @@ interface Settings {
 	extensions: string[];
 	folder: string;
 	filenameFormat: string;
-	templateFile: string;
+	templatePath: string;
 	useTemplater: boolean;
 }
 
@@ -40,14 +40,19 @@ const DEFAULT_SETTINGS: Settings = {
 		'pdf',
 	],
 	folder: '/',
-	filenameFormat: 'INFO_{{NAME}}_{EXTENSION:UP}}',
-	templateFile: '/',
+	filenameFormat: 'INFO_{{NAME}}_{{EXTENSION:UP}}',
+	templatePath: '',
 	useTemplater: false,
 };
 
 const PLUGIN_NAME = 'obsidian-static-file-manager-plugin';
 const REGISTERED_STATIC_FILE_STORAGE_FILE_NAME = '.static_file_list.txt';
 const TEMPLATER_PLUGIN_NAME = 'templater-obsidian';
+const DEFAULT_TEMPLATE_CONTENT = `![[{{PATH}}]]
+PATH: {{PATH}}
+CREATED At: {{CDATE:YYYYMMDD}}
+FILE TYPE: {{EXTENSION:UP}}
+`;
 
 export default class StaticFileManagerPlugin extends Plugin {
 	settings: Settings;
@@ -209,14 +214,7 @@ export default class StaticFileManagerPlugin extends Plugin {
 		metaDataFilePath: string,
 		staticFile: TFile
 	): Promise<void> {
-		const templateFile = this.app.vault.getAbstractFileByPath(
-			this.settings.templateFile
-		);
-		if (!(templateFile instanceof TFile)) {
-			console.log(this.settings.templateFile);
-			new Notice(`Template file ${templateFile} is invalid`);
-			return;
-		}
+		const templateContent = await this.fetchTemplateContent();
 
 		// process by Templater
 		const templaterPlugin = await this.getTemplaterPlugin();
@@ -224,7 +222,7 @@ export default class StaticFileManagerPlugin extends Plugin {
 			this.app.vault.create(
 				metaDataFilePath,
 				Formatter.format(
-					await this.app.vault.read(templateFile),
+					templateContent,
 					staticFile.path,
 					staticFile.stat.ctime
 				)
@@ -241,7 +239,7 @@ export default class StaticFileManagerPlugin extends Plugin {
 				const content = await templaterPlugin.templater.parse_template(
 					{ target_file: targetFile, run_mode: 4 },
 					Formatter.format(
-						await this.app.vault.read(templateFile),
+						templateContent,
 						staticFile.path,
 						staticFile.stat.ctime
 					)
@@ -254,6 +252,21 @@ export default class StaticFileManagerPlugin extends Plugin {
 				console.log(err);
 			}
 		}
+	}
+
+	private async fetchTemplateContent(): Promise<string> {
+		if (this.settings.templatePath === '') {
+			return DEFAULT_TEMPLATE_CONTENT;
+		}
+		const templateFile = this.app.vault.getAbstractFileByPath(
+			this.settings.templatePath
+		);
+		if (!(templateFile instanceof TFile)) {
+			console.log(this.settings.templatePath);
+			new Notice(`Template file ${templateFile} is invalid`);
+			return DEFAULT_TEMPLATE_CONTENT;
+		}
+		return await this.app.vault.read(templateFile);
 	}
 
 	private async getTemplaterPlugin(): Promise<Plugin | undefined> {
