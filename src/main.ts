@@ -66,7 +66,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		this.formatter = new Formatter(this.app, this);
 
 		this.extensions = new Set<string>(this.settings.extensions);
-		this.loadRegisteredBinaryFiles();
+		await this.loadRegisteredBinaryFiles();
 
 		this.app.workspace.onLayoutReady(async () => {
 			this.unregisterNonExistingBinaryFiles();
