@@ -14,25 +14,25 @@ export class TemplaterAdapter {
 		return moment(createdAt);
 	}
 
-	staticFileName(metaDataFileName: string): string | undefined {
+	binaryFileName(metaDataFileName: string): string | undefined {
 		const fileNameWithMd = metaDataFileName.endsWith('.md')
 			? metaDataFileName
 			: metaDataFileName + '.md';
-		const staticFileName =
-			this.templaterArgMap.get(fileNameWithMd)?.staticFileName;
-		if (!staticFileName) {
+		const binaryFileName =
+			this.templaterArgMap.get(fileNameWithMd)?.binaryFileName;
+		if (!binaryFileName) {
 			return undefined;
 		}
-		return staticFileName;
+		return binaryFileName;
 	}
 
 	setNewArg(
 		metaDataFileName: string,
-		staticFileName: string,
+		binaryFileName: string,
 		createdAt: number
 	): void {
 		this.templaterArgMap.set(metaDataFileName, {
-			staticFileName: staticFileName,
+			binaryFileName: binaryFileName,
 			createdAt: createdAt,
 		});
 	}
@@ -40,5 +40,5 @@ export class TemplaterAdapter {
 
 type TemplaterArgs = {
 	createdAt: number;
-	staticFileName: string;
+	binaryFileName: string;
 };

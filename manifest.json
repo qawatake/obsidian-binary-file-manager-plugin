@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-static-file-manager-plugin",
-	"name": "Static File Manager",
+	"id": "obsidian-binary-file-manager-plugin",
+	"name": "Binary File Manager",
 	"version": "0.0.0",
 	"minAppVersion": "0.12.0",
-	"description": "This plugin helps to manage static files by adding markdown file with the meta data.",
+	"description": "This plugin detects new binary files in the vault and create markdown files with metadata.",
 	"author": "qawatake",
-	"authorUrl": "https://github.com/qawatake/obsidian-static-file-manager-plugin",
+	"authorUrl": "https://github.com/qawatake/obsidian-binary-file-manager-plugin",
 	"isDesktopOnly": false
 }

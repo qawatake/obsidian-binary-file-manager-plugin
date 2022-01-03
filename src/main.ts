@@ -45,28 +45,29 @@ const DEFAULT_SETTINGS: Settings = {
 	useTemplater: false,
 };
 
-const PLUGIN_NAME = 'obsidian-static-file-manager-plugin';
-const REGISTERED_STATIC_FILE_STORAGE_FILE_NAME = '.static_file_list.txt';
+const PLUGIN_NAME = 'obsidian-binary-file-manager-plugin';
+const REGISTERED_BINARY_FILE_STORAGE_FILE_NAME =
+	'.binary-file-manager_binary-file-list.txt';
 const TEMPLATER_PLUGIN_NAME = 'templater-obsidian';
 const DEFAULT_TEMPLATE_CONTENT = `![[{{PATH}}]]
-PATH: {{PATH}}
-CREATED At: {{CDATE:YYYYMMDD}}
+LINK: [[{{PATH}}]]
+CREATED At: {{CDATE:YYYY-MM-DD}}
 FILE TYPE: {{EXTENSION:UP}}
 `;
 
-export default class StaticFileManagerPlugin extends Plugin {
+export default class BinaryFileManagerPlugin extends Plugin {
 	settings: Settings;
-	private registeredStaticFiles: Set<string>;
+	private registeredBinaryFiles: Set<string>;
 	tpAPI: TemplaterAdapter = new TemplaterAdapter();
 
 	override async onload() {
 		await this.loadSettings();
 		console.log(this.app);
 
-		this.loadRegisteredStaticFiles();
+		this.loadRegisteredBinaryFiles();
 
 		this.app.workspace.onLayoutReady(async () => {
-			this.unregisterNonExistingStaticFiles();
+			this.unregisterNonExistingBinaryFiles();
 		});
 
 		this.registerEvent(
@@ -87,17 +88,17 @@ export default class StaticFileManagerPlugin extends Plugin {
 				);
 				await this.createMetaDataFile(metaDataFilePath, file as TFile);
 				new Notice(`Meta data file of ${file.name} is created.`);
-				this.registeredStaticFiles.add(file.name);
-				this.saveRegisteredStaticFiles();
+				this.registeredBinaryFiles.add(file.name);
+				this.saveRegisteredBinaryFiles();
 			})
 		);
 
 		this.registerEvent(
 			this.app.vault.on('delete', async (file: TAbstractFile) => {
-				if (!this.shouldUnregisterStaticFile(file)) {
+				if (!this.shouldUnregisterBinaryFile(file)) {
 					return;
 				}
-				await this.unregisterStaticFile(file as TFile);
+				await this.unregisterBinaryFile(file as TFile);
 			})
 		);
 
@@ -107,32 +108,32 @@ export default class StaticFileManagerPlugin extends Plugin {
 
 	// onunload() {}
 
-	private async loadRegisteredStaticFiles() {
+	private async loadRegisteredBinaryFiles() {
 		const configDir = this.app.vault.configDir;
 		const storageFilePath = normalizePath(
-			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_STATIC_FILE_STORAGE_FILE_NAME}`
+			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_BINARY_FILE_STORAGE_FILE_NAME}`
 		);
 
 		if (!(await this.app.vault.adapter.exists(storageFilePath))) {
-			this.registeredStaticFiles = new Set<string>();
+			this.registeredBinaryFiles = new Set<string>();
 			return;
 		}
 
-		const staticFiles = (await this.app.vault.adapter.read(storageFilePath))
+		const binaryFiles = (await this.app.vault.adapter.read(storageFilePath))
 			.trim()
 			.split(/\r?\n/);
-		this.registeredStaticFiles = new Set<string>(staticFiles);
+		this.registeredBinaryFiles = new Set<string>(binaryFiles);
 	}
 
-	private async saveRegisteredStaticFiles() {
+	private async saveRegisteredBinaryFiles() {
 		const configDir = this.app.vault.configDir;
 		const storageFilePath = normalizePath(
-			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_STATIC_FILE_STORAGE_FILE_NAME}`
+			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_BINARY_FILE_STORAGE_FILE_NAME}`
 		);
 
 		await this.app.vault.adapter.write(
 			storageFilePath,
-			Array.from(this.registeredStaticFiles).join('\n')
+			Array.from(this.registeredBinaryFiles).join('\n')
 		);
 	}
 
@@ -156,34 +157,34 @@ export default class StaticFileManagerPlugin extends Plugin {
 			return false;
 		}
 
-		if (this.registeredStaticFiles.has(file.name)) {
+		if (this.registeredBinaryFiles.has(file.name)) {
 			return false;
 		}
 
 		return true;
 	}
 
-	private shouldUnregisterStaticFile(file: TAbstractFile): boolean {
+	private shouldUnregisterBinaryFile(file: TAbstractFile): boolean {
 		if (!(file instanceof TFile)) {
 			return false;
 		}
-		return this.registeredStaticFiles.has(file.name);
+		return this.registeredBinaryFiles.has(file.name);
 	}
 
-	private async unregisterStaticFile(file: TFile): Promise<void> {
-		this.registeredStaticFiles.delete(file.name);
-		await this.saveRegisteredStaticFiles();
+	private async unregisterBinaryFile(file: TFile): Promise<void> {
+		this.registeredBinaryFiles.delete(file.name);
+		await this.saveRegisteredBinaryFiles();
 	}
 
-	private async unregisterNonExistingStaticFiles() {
-		const difference = new Set(this.registeredStaticFiles);
+	private async unregisterNonExistingBinaryFiles() {
+		const difference = new Set(this.registeredBinaryFiles);
 		for (const file of this.app.vault.getFiles()) {
 			difference.delete(file.name);
 		}
 		for (const fileToBeUnregistered of difference) {
-			this.registeredStaticFiles.delete(fileToBeUnregistered);
+			this.registeredBinaryFiles.delete(fileToBeUnregistered);
 		}
-		this.saveRegisteredStaticFiles();
+		this.saveRegisteredBinaryFiles();
 	}
 
 	private generateMetaDataFileName(file: TFile): string {
@@ -212,7 +213,7 @@ export default class StaticFileManagerPlugin extends Plugin {
 
 	private async createMetaDataFile(
 		metaDataFilePath: string,
-		staticFile: TFile
+		binaryFile: TFile
 	): Promise<void> {
 		const templateContent = await this.fetchTemplateContent();
 
@@ -223,8 +224,8 @@ export default class StaticFileManagerPlugin extends Plugin {
 				metaDataFilePath,
 				Formatter.format(
 					templateContent,
-					staticFile.path,
-					staticFile.stat.ctime
+					binaryFile.path,
+					binaryFile.stat.ctime
 				)
 			);
 		} else {
@@ -240,14 +241,14 @@ export default class StaticFileManagerPlugin extends Plugin {
 					{ target_file: targetFile, run_mode: 4 },
 					Formatter.format(
 						templateContent,
-						staticFile.path,
-						staticFile.stat.ctime
+						binaryFile.path,
+						binaryFile.stat.ctime
 					)
 				);
 				this.app.vault.modify(targetFile, content);
 			} catch (err) {
 				new Notice(
-					'ERROR in Static File Manager Plugin: failed to connect to Templater. Your Templater version may not be supported'
+					'ERROR in Binary File Manager Plugin: failed to connect to Templater. Your Templater version may not be supported'
 				);
 				console.log(err);
 			}
