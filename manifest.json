@@ -3,7 +3,7 @@
 	"name": "Binary File Manager",
 	"version": "0.0.0",
 	"minAppVersion": "0.12.0",
-	"description": "This plugin detects new binary files in the vault and create markdown files with metadata.",
+	"description": "Detects new binary files in the vault and create markdown files with metadata.",
 	"author": "qawatake",
 	"authorUrl": "https://github.com/qawatake/obsidian-binary-file-manager-plugin",
 	"isDesktopOnly": true
