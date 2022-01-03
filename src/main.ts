@@ -7,10 +7,10 @@ import {
 	moment,
 } from 'obsidian';
 import { Formatter } from 'Formatter';
-import { SampleSettingTab } from 'Setting';
+import { BinaryFileManagerSettingTab } from 'Setting';
 import { UncoveredApp } from 'Uncover';
 
-interface Settings {
+interface BinaryFileManagerSettings {
 	extensions: string[];
 	folder: string;
 	filenameFormat: string;
@@ -18,7 +18,7 @@ interface Settings {
 	useTemplater: boolean;
 }
 
-const DEFAULT_SETTINGS: Settings = {
+const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 	extensions: [
 		'png',
 		'jpg',
@@ -55,7 +55,7 @@ FILE TYPE: {{EXTENSION:UP}}
 `;
 
 export default class BinaryFileManagerPlugin extends Plugin {
-	settings: Settings;
+	settings: BinaryFileManagerSettings;
 	formatter: Formatter;
 	private registeredBinaryFilePaths: Set<string>;
 	extensions: Set<string>;
@@ -100,7 +100,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		);
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new BinaryFileManagerSettingTab(this.app, this));
 	}
 
 	// onunload() {}

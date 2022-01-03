@@ -3,7 +3,7 @@ import { PluginSettingTab, Setting, App, Notice, moment } from 'obsidian';
 import { FolderSuggest } from 'suggesters/FolderSuggester';
 import { FileSuggest } from 'suggesters/FileSuggester';
 
-export class SampleSettingTab extends PluginSettingTab {
+export class BinaryFileManagerSettingTab extends PluginSettingTab {
 	plugin: BinaryFileManagerPlugin;
 
 	constructor(app: App, plugin: BinaryFileManagerPlugin) {
