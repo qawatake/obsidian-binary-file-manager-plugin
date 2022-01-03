@@ -57,7 +57,7 @@ FILE TYPE: {{EXTENSION:UP}}
 
 export default class BinaryFileManagerPlugin extends Plugin {
 	settings: Settings;
-	private registeredBinaryFiles: Set<string>;
+	private registeredBinaryFilePaths: Set<string>;
 	tpAPI: TemplaterAdapter = new TemplaterAdapter();
 
 	override async onload() {
@@ -88,7 +88,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 				);
 				await this.createMetaDataFile(metaDataFilePath, file as TFile);
 				new Notice(`Meta data file of ${file.name} is created.`);
-				this.registeredBinaryFiles.add(file.name);
+				this.registeredBinaryFilePaths.add(file.path);
 				this.saveRegisteredBinaryFiles();
 			})
 		);
@@ -115,14 +115,14 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		);
 
 		if (!(await this.app.vault.adapter.exists(storageFilePath))) {
-			this.registeredBinaryFiles = new Set<string>();
+			this.registeredBinaryFilePaths = new Set<string>();
 			return;
 		}
 
 		const binaryFiles = (await this.app.vault.adapter.read(storageFilePath))
 			.trim()
 			.split(/\r?\n/);
-		this.registeredBinaryFiles = new Set<string>(binaryFiles);
+		this.registeredBinaryFilePaths = new Set<string>(binaryFiles);
 	}
 
 	private async saveRegisteredBinaryFiles() {
@@ -133,7 +133,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 
 		await this.app.vault.adapter.write(
 			storageFilePath,
-			Array.from(this.registeredBinaryFiles).join('\n')
+			Array.from(this.registeredBinaryFilePaths).join('\n')
 		);
 	}
 
@@ -157,7 +157,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			return false;
 		}
 
-		if (this.registeredBinaryFiles.has(file.name)) {
+		if (this.registeredBinaryFilePaths.has(file.path)) {
 			return false;
 		}
 
@@ -168,21 +168,21 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		if (!(file instanceof TFile)) {
 			return false;
 		}
-		return this.registeredBinaryFiles.has(file.name);
+		return this.registeredBinaryFilePaths.has(file.name);
 	}
 
 	private async unregisterBinaryFile(file: TFile): Promise<void> {
-		this.registeredBinaryFiles.delete(file.name);
+		this.registeredBinaryFilePaths.delete(file.path);
 		await this.saveRegisteredBinaryFiles();
 	}
 
 	private async unregisterNonExistingBinaryFiles() {
-		const difference = new Set(this.registeredBinaryFiles);
+		const difference = new Set(this.registeredBinaryFilePaths);
 		for (const file of this.app.vault.getFiles()) {
-			difference.delete(file.name);
+			difference.delete(file.path);
 		}
 		for (const fileToBeUnregistered of difference) {
-			this.registeredBinaryFiles.delete(fileToBeUnregistered);
+			this.registeredBinaryFilePaths.delete(fileToBeUnregistered);
 		}
 		this.saveRegisteredBinaryFiles();
 	}
