@@ -1,6 +1,0 @@
-meta_image copy 2.png
-meta_image copy 3.png
-meta_image copy 4.png
-meta_image copy.png
-meta_image.png
-xmeta_image copy.png
