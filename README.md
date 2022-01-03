@@ -14,7 +14,7 @@ For example, if you add tags to the metadata of an image file, then you can indi
 2. Add a static file like `sample.pdf` to your vault.
 
 Then you will find a meta data file `INFO_sample_PDF.md` in the root directory.
-You can customize the templates for names and contents of metadata files.
+You can customize the new file location and the templates for names and contents of metadata files.
 
 ### Format syntax
 You can use the following syntax to format the names and contents of metadata files.
