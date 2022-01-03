@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-binary-file-manager-plugin",
 	"version": "0.12.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "This plugin detects new binary files in the vault and create markdown files with metadata.",
 	"main": "main.js",
 	"scripts": {
 		"fix:prettier": "prettier --write src",
@@ -14,7 +14,7 @@
 		"build": "node esbuild.config.mjs production"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "qawatake",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^17.0.5",
