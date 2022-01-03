@@ -1,13 +1,12 @@
-import MyPlugin from 'main';
+import BinaryFileManagerPlugin from 'main';
 import { PluginSettingTab, Setting, App, Notice, moment } from 'obsidian';
 import { FolderSuggest } from 'suggesters/FolderSuggester';
 import { FileSuggest } from 'suggesters/FileSuggester';
-import { Formatter } from 'Formatter';
 
 export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: BinaryFileManagerPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: BinaryFileManagerPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -63,9 +62,9 @@ export class SampleSettingTab extends PluginSettingTab {
 				new FileSuggest(this.app, component.inputEl);
 				component
 					.setPlaceholder('Example: folder1/note')
-					.setValue(this.plugin.settings.templateFile)
+					.setValue(this.plugin.settings.templatePath)
 					.onChange((newTemplateFile) => {
-						this.plugin.settings.templateFile = newTemplateFile;
+						this.plugin.settings.templatePath = newTemplateFile;
 						this.plugin.saveSettings();
 					});
 			});
@@ -105,16 +104,20 @@ export class SampleSettingTab extends PluginSettingTab {
 						);
 						return;
 					}
+					this.plugin.extensions.add(extensionToBeAdded);
 					this.plugin.settings.extensions.push(extensionToBeAdded);
 					await this.plugin.saveSettings();
 					this.display();
 				});
 			});
 
-		this.plugin.settings.extensions.forEach((ext, index) => {
+		this.plugin.settings.extensions.forEach((ext) => {
 			new Setting(containerEl).setName(ext).addExtraButton((cb) => {
 				cb.setIcon('cross').onClick(async () => {
-					this.plugin.settings.extensions.splice(index, 1);
+					this.plugin.extensions.delete(ext);
+					this.plugin.settings.extensions = Array.from(
+						this.plugin.extensions
+					);
 					await this.plugin.saveSettings();
 					this.display();
 				});
@@ -128,7 +131,7 @@ export class SampleSettingTab extends PluginSettingTab {
 			createFragment((fragment) => {
 				fragment.appendText('Your current syntax looks like this: ');
 				fragment.createEl('b', {
-					text: Formatter.format(
+					text: this.plugin.formatter.format(
 						format,
 						'folder/sample.png',
 						moment.now()

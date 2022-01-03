@@ -56,12 +56,17 @@ FILE TYPE: {{EXTENSION:UP}}
 
 export default class BinaryFileManagerPlugin extends Plugin {
 	settings: Settings;
+	formatter: Formatter;
 	private registeredBinaryFilePaths: Set<string>;
+	extensions: Set<string>;
 
 	override async onload() {
 		await this.loadSettings();
 		console.log(this.app);
 
+		this.formatter = new Formatter(this.app, this);
+
+		this.extensions = new Set<string>(this.settings.extensions);
 		this.loadRegisteredBinaryFiles();
 
 		this.app.workspace.onLayoutReady(async () => {
@@ -137,16 +142,8 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			return false;
 		}
 
-		if (!file.extension) {
-			console.log('file.extension is undefined');
-			return false;
-		}
-
-		if (
-			!this.settings.extensions.some((ext) =>
-				file.name.endsWith(`.${ext}`)
-			)
-		) {
+		const matchedExtension = this.getExtensionMatchedBest(file.name);
+		if (!matchedExtension) {
 			return false;
 		}
 
@@ -155,6 +152,23 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		}
 
 		return true;
+	}
+
+	private getExtensionMatchedBest(filename: string): string | undefined {
+		// investigate extensions from longer to shorter
+		for (let id = 0; id < filename.length; id++) {
+			if (filename[id] !== '.') {
+				continue;
+			}
+			const ext = filename.slice(id).replace(/^\./, '');
+			if (ext === '') {
+				return undefined;
+			}
+			if (this.extensions.has(ext)) {
+				return ext;
+			}
+		}
+		return undefined;
 	}
 
 	private shouldUnregisterBinaryFile(file: TAbstractFile): boolean {
@@ -181,7 +195,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 	}
 
 	private generateMetaDataFileName(file: TFile): string {
-		const metaDataFileName = `${Formatter.format(
+		const metaDataFileName = `${this.formatter.format(
 			this.settings.filenameFormat,
 			file.path,
 			file.stat.ctime
@@ -215,7 +229,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		if (!(this.settings.useTemplater && templaterPlugin)) {
 			this.app.vault.create(
 				metaDataFilePath,
-				Formatter.format(
+				this.formatter.format(
 					templateContent,
 					binaryFile.path,
 					binaryFile.stat.ctime
@@ -232,7 +246,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 				// @ts-ignore
 				const content = await templaterPlugin.templater.parse_template(
 					{ target_file: targetFile, run_mode: 4 },
-					Formatter.format(
+					this.formatter.format(
 						templateContent,
 						binaryFile.path,
 						binaryFile.stat.ctime

@@ -1,4 +1,5 @@
-import { moment } from 'obsidian';
+import BinaryFileManagerPlugin from 'main';
+import { App, moment } from 'obsidian';
 import * as path from 'path';
 const DATE_REGEXP = /{{CDATE:([^}\n\r]*)}}/g;
 const NAME_REGEX = /{{NAME(((:UP)|(:LOW))?)}}/g;
@@ -8,7 +9,15 @@ const PATH_REGEX = /{{PATH(((:UP)|(:LOW))?)}}/g;
 const NOW_REGEXP = /{{NOW:([^}\n\r]*)}}/g;
 
 export class Formatter {
-	static format(input: string, filepath: string, createdAt: number): string {
+	app: App;
+	plugin: BinaryFileManagerPlugin;
+
+	constructor(app: App, plugin: BinaryFileManagerPlugin) {
+		this.app = app;
+		this.plugin = plugin;
+	}
+
+	format(input: string, filepath: string, createdAt: number): string {
 		let output = input;
 		output = this.replaceDate(output, createdAt);
 		output = this.replaceNow(output);
@@ -27,7 +36,7 @@ export class Formatter {
 		return output;
 	}
 
-	private static replaceDate(input: string, unixMilliSecond: number): string {
+	private replaceDate(input: string, unixMilliSecond: number): string {
 		const output = input.replace(
 			DATE_REGEXP,
 			(_matched: string, fmt: string): string => {
@@ -37,7 +46,7 @@ export class Formatter {
 		return output;
 	}
 
-	private static replaceFullName(input: string, fullname: string): string {
+	private replaceFullName(input: string, fullname: string): string {
 		return input.replace(
 			FULLNAME_REGEX,
 			(_matched: string, caseMode: string): string => {
@@ -52,7 +61,7 @@ export class Formatter {
 		);
 	}
 
-	private static replaceName(input: string, filename: string): string {
+	private replaceName(input: string, filename: string): string {
 		return input.replace(
 			NAME_REGEX,
 			(_matched: string, caseMode: string): string => {
@@ -67,7 +76,7 @@ export class Formatter {
 		);
 	}
 
-	private static replaceExtension(input: string, extension: string): string {
+	private replaceExtension(input: string, extension: string): string {
 		return input.replace(
 			EXTENSION_REGEX,
 			(_matched: string, caseMode: string): string => {
@@ -82,7 +91,7 @@ export class Formatter {
 		);
 	}
 
-	private static replaceNow(input: string): string {
+	private replaceNow(input: string): string {
 		const currentDate = moment();
 		return input.replace(
 			NOW_REGEXP,
@@ -92,7 +101,7 @@ export class Formatter {
 		);
 	}
 
-	private static replacePath(input: string, filepath: string): string {
+	private replacePath(input: string, filepath: string): string {
 		return input.replace(
 			PATH_REGEX,
 			(_matched: string, caseMode: string): string => {
