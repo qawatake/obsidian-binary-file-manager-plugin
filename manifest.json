@@ -6,5 +6,5 @@
 	"description": "This plugin detects new binary files in the vault and create markdown files with metadata.",
 	"author": "qawatake",
 	"authorUrl": "https://github.com/qawatake/obsidian-binary-file-manager-plugin",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }
