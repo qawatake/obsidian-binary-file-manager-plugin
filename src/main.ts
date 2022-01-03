@@ -7,7 +7,6 @@ import {
 	moment,
 } from 'obsidian';
 import { Formatter } from 'Formatter';
-import { TemplaterAdapter } from 'TemplaterAdapter';
 import { SampleSettingTab } from 'Setting';
 import { UncoveredApp } from 'Uncover';
 
@@ -58,7 +57,6 @@ FILE TYPE: {{EXTENSION:UP}}
 export default class BinaryFileManagerPlugin extends Plugin {
 	settings: Settings;
 	private registeredBinaryFilePaths: Set<string>;
-	tpAPI: TemplaterAdapter = new TemplaterAdapter();
 
 	override async onload() {
 		await this.loadSettings();
@@ -81,11 +79,6 @@ export default class BinaryFileManagerPlugin extends Plugin {
 				);
 				const metaDataFilePath = `${this.settings.folder}/${metaDataFileName}`;
 
-				this.tpAPI.setNewArg(
-					metaDataFileName,
-					file.name,
-					(file as TFile).stat.ctime
-				);
 				await this.createMetaDataFile(metaDataFilePath, file as TFile);
 				new Notice(`Meta data file of ${file.name} is created.`);
 				this.registeredBinaryFilePaths.add(file.path);
