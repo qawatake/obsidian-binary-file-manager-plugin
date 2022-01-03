@@ -62,7 +62,6 @@ export default class BinaryFileManagerPlugin extends Plugin {
 
 	override async onload() {
 		await this.loadSettings();
-		console.log(this.app);
 
 		this.formatter = new Formatter(this.app, this);
 
