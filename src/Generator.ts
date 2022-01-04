@@ -9,6 +9,7 @@ import {
 	Plugin,
 } from 'obsidian';
 import { UncoveredApp } from 'Uncover';
+import { retry } from 'Util';
 
 const TEMPLATER_PLUGIN_NAME = 'templater-obsidian';
 const DEFAULT_TEMPLATE_CONTENT = `![[{{PATH}}]]
@@ -16,6 +17,9 @@ LINK: [[{{PATH}}]]
 CREATED At: {{CDATE:YYYY-MM-DD}}
 FILE TYPE: {{EXTENSION:UP}}
 `;
+
+const RETRY_NUMBER = 1000;
+const TIMEOUT_MILLISECOND = 1000;
 
 export class MetaDataGenerator {
 	private app: App;
@@ -123,12 +127,22 @@ export class MetaDataGenerator {
 		if (this.plugin.settings.templatePath === '') {
 			return DEFAULT_TEMPLATE_CONTENT;
 		}
-		const templateFile = this.app.vault.getAbstractFileByPath(
-			this.plugin.settings.templatePath
+
+		const templateFile = await retry(
+			() => {
+				return this.app.vault.getAbstractFileByPath(
+					this.plugin.settings.templatePath
+				);
+			},
+			TIMEOUT_MILLISECOND,
+			RETRY_NUMBER,
+			(abstractFile) => abstractFile !== null
 		);
+
 		if (!(templateFile instanceof TFile)) {
-			console.log(this.plugin.settings.templatePath);
-			new Notice(`Template file ${templateFile} is invalid`);
+			const msg = `Template file ${this.plugin.settings.templatePath} is invalid`;
+			console.log(msg);
+			new Notice(msg);
 			return DEFAULT_TEMPLATE_CONTENT;
 		}
 		return await this.app.vault.read(templateFile);
@@ -136,6 +150,12 @@ export class MetaDataGenerator {
 
 	private async getTemplaterPlugin(): Promise<Plugin | undefined> {
 		const app = this.app as UncoveredApp;
-		return app.plugins.plugins[TEMPLATER_PLUGIN_NAME];
+		return await retry(
+			() => {
+				return app.plugins.plugins[TEMPLATER_PLUGIN_NAME];
+			},
+			TIMEOUT_MILLISECOND,
+			RETRY_NUMBER
+		);
 	}
 }
