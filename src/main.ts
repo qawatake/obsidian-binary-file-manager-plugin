@@ -10,6 +10,7 @@ import { Formatter } from 'Formatter';
 import { BinaryFileManagerSettingTab } from 'Setting';
 import { UncoveredApp } from 'Uncover';
 import { FileExtensionManager } from 'Extension';
+import { FileListAdapter } from 'FileList';
 
 interface BinaryFileManagerSettings {
 	extensions: string[];
@@ -45,9 +46,6 @@ const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 	useTemplater: false,
 };
 
-const PLUGIN_NAME = 'obsidian-binary-file-manager-plugin';
-const REGISTERED_BINARY_FILE_STORAGE_FILE_NAME =
-	'.binary-file-manager_binary-file-list.txt';
 const TEMPLATER_PLUGIN_NAME = 'templater-obsidian';
 const DEFAULT_TEMPLATE_CONTENT = `![[{{PATH}}]]
 LINK: [[{{PATH}}]]
@@ -59,19 +57,14 @@ export default class BinaryFileManagerPlugin extends Plugin {
 	settings: BinaryFileManagerSettings;
 	formatter: Formatter;
 	fileExtensionManager: FileExtensionManager;
-	private registeredBinaryFilePaths: Set<string>;
+	fileListAdapter: FileListAdapter;
 
 	override async onload() {
 		await this.loadSettings();
 
 		this.formatter = new Formatter(this.app, this);
 		this.fileExtensionManager = new FileExtensionManager(this);
-
-		await this.loadRegisteredBinaryFiles();
-
-		this.app.workspace.onLayoutReady(async () => {
-			this.unregisterNonExistingBinaryFiles();
-		});
+		this.fileListAdapter = await new FileListAdapter(this.app, this).load();
 
 		this.registerEvent(
 			this.app.vault.on('create', async (file: TAbstractFile) => {
@@ -86,17 +79,18 @@ export default class BinaryFileManagerPlugin extends Plugin {
 
 				await this.createMetaDataFile(metaDataFilePath, file as TFile);
 				new Notice(`Meta data file of ${file.name} is created.`);
-				this.registeredBinaryFilePaths.add(file.path);
-				this.saveRegisteredBinaryFiles();
+				this.fileListAdapter.add(file.path);
+				await this.fileListAdapter.save();
 			})
 		);
 
 		this.registerEvent(
 			this.app.vault.on('delete', async (file: TAbstractFile) => {
-				if (!this.shouldUnregisterBinaryFile(file)) {
+				if (this.fileListAdapter.has(file.path)) {
 					return;
 				}
-				await this.unregisterBinaryFile(file as TFile);
+				this.fileListAdapter.delete(file.path);
+				await this.fileListAdapter.save();
 			})
 		);
 
@@ -105,35 +99,6 @@ export default class BinaryFileManagerPlugin extends Plugin {
 	}
 
 	// onunload() {}
-
-	private async loadRegisteredBinaryFiles() {
-		const configDir = this.app.vault.configDir;
-		const storageFilePath = normalizePath(
-			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_BINARY_FILE_STORAGE_FILE_NAME}`
-		);
-
-		if (!(await this.app.vault.adapter.exists(storageFilePath))) {
-			this.registeredBinaryFilePaths = new Set<string>();
-			return;
-		}
-
-		const binaryFiles = (await this.app.vault.adapter.read(storageFilePath))
-			.trim()
-			.split(/\r?\n/);
-		this.registeredBinaryFilePaths = new Set<string>(binaryFiles);
-	}
-
-	private async saveRegisteredBinaryFiles() {
-		const configDir = this.app.vault.configDir;
-		const storageFilePath = normalizePath(
-			`${configDir}/plugins/${PLUGIN_NAME}/${REGISTERED_BINARY_FILE_STORAGE_FILE_NAME}`
-		);
-
-		await this.app.vault.adapter.write(
-			storageFilePath,
-			Array.from(this.registeredBinaryFilePaths).join('\n')
-		);
-	}
 
 	private async shouldCreateMetaDataFile(
 		file: TAbstractFile
@@ -148,34 +113,11 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			return false;
 		}
 
-		if (this.registeredBinaryFilePaths.has(file.path)) {
+		if (this.fileListAdapter.has(file.path)) {
 			return false;
 		}
 
 		return true;
-	}
-
-	private shouldUnregisterBinaryFile(file: TAbstractFile): boolean {
-		if (!(file instanceof TFile)) {
-			return false;
-		}
-		return this.registeredBinaryFilePaths.has(file.name);
-	}
-
-	private async unregisterBinaryFile(file: TFile): Promise<void> {
-		this.registeredBinaryFilePaths.delete(file.path);
-		await this.saveRegisteredBinaryFiles();
-	}
-
-	private async unregisterNonExistingBinaryFiles() {
-		const difference = new Set(this.registeredBinaryFilePaths);
-		for (const file of this.app.vault.getFiles()) {
-			difference.delete(file.path);
-		}
-		for (const fileToBeUnregistered of difference) {
-			this.registeredBinaryFilePaths.delete(fileToBeUnregistered);
-		}
-		this.saveRegisteredBinaryFiles();
 	}
 
 	private generateMetaDataFileName(file: TFile): string {
