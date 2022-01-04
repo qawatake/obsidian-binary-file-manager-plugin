@@ -86,7 +86,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.vault.on('delete', async (file: TAbstractFile) => {
-				if (this.fileListAdapter.has(file.path)) {
+				if (!this.fileListAdapter.has(file.path)) {
 					return;
 				}
 				this.fileListAdapter.delete(file.path);
