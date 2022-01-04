@@ -72,7 +72,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 					return;
 				}
 
-				const metaDataFileName = await this.uniquefyMetaDataFileName(
+				const metaDataFileName = this.uniquefyMetaDataFileName(
 					this.generateMetaDataFileName(file as TFile)
 				);
 				const metaDataFilePath = `${this.settings.folder}/${metaDataFileName}`;
@@ -129,13 +129,11 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		return metaDataFileName;
 	}
 
-	private async uniquefyMetaDataFileName(
-		metaDataFileName: string
-	): Promise<string> {
+	private uniquefyMetaDataFileName(metaDataFileName: string): string {
 		const metaDataFilePath = normalizePath(
 			`${this.settings.folder}/${metaDataFileName}`
 		);
-		if (await this.app.vault.adapter.exists(metaDataFilePath)) {
+		if (this.app.vault.getAbstractFileByPath(metaDataFilePath)) {
 			return `CONFLICT-${moment().format(
 				'YYYY-MM-DD-hh-mm-ss'
 			)}-${metaDataFileName}`;
