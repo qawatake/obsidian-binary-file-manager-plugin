@@ -9,6 +9,7 @@ import {
 import { Formatter } from 'Formatter';
 import { BinaryFileManagerSettingTab } from 'Setting';
 import { UncoveredApp } from 'Uncover';
+import { FileExtensionManager } from 'Extension';
 
 interface BinaryFileManagerSettings {
 	extensions: string[];
@@ -57,15 +58,15 @@ FILE TYPE: {{EXTENSION:UP}}
 export default class BinaryFileManagerPlugin extends Plugin {
 	settings: BinaryFileManagerSettings;
 	formatter: Formatter;
+	fileExtensionManager: FileExtensionManager;
 	private registeredBinaryFilePaths: Set<string>;
-	extensions: Set<string>;
 
 	override async onload() {
 		await this.loadSettings();
 
 		this.formatter = new Formatter(this.app, this);
+		this.fileExtensionManager = new FileExtensionManager(this);
 
-		this.extensions = new Set<string>(this.settings.extensions);
 		await this.loadRegisteredBinaryFiles();
 
 		this.app.workspace.onLayoutReady(async () => {
@@ -141,7 +142,8 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			return false;
 		}
 
-		const matchedExtension = this.getExtensionMatchedBest(file.name);
+		const matchedExtension =
+			this.fileExtensionManager.getExtensionMatchedBest(file.name);
 		if (!matchedExtension) {
 			return false;
 		}
@@ -151,23 +153,6 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		}
 
 		return true;
-	}
-
-	getExtensionMatchedBest(filename: string): string | undefined {
-		// investigate extensions from longer to shorter
-		for (let id = 0; id < filename.length; id++) {
-			if (filename[id] !== '.') {
-				continue;
-			}
-			const ext = filename.slice(id).replace(/^\./, '');
-			if (ext === '') {
-				return undefined;
-			}
-			if (this.extensions.has(ext)) {
-				return ext;
-			}
-		}
-		return undefined;
 	}
 
 	private shouldUnregisterBinaryFile(file: TAbstractFile): boolean {

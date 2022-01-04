@@ -95,16 +95,14 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 						return;
 					}
 					if (
-						this.plugin.settings.extensions.includes(
-							extensionToBeAdded
-						)
+						this.plugin.fileExtensionManager.has(extensionToBeAdded)
 					) {
 						new Notice(
 							`${extensionToBeAdded} is already registered`
 						);
 						return;
 					}
-					this.plugin.extensions.add(extensionToBeAdded);
+					this.plugin.fileExtensionManager.add(extensionToBeAdded);
 					this.plugin.settings.extensions.push(extensionToBeAdded);
 					await this.plugin.saveSettings();
 					this.display();
@@ -114,10 +112,9 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 		this.plugin.settings.extensions.forEach((ext) => {
 			new Setting(containerEl).setName(ext).addExtraButton((cb) => {
 				cb.setIcon('cross').onClick(async () => {
-					this.plugin.extensions.delete(ext);
-					this.plugin.settings.extensions = Array.from(
-						this.plugin.extensions
-					);
+					this.plugin.fileExtensionManager.delete(ext);
+					this.plugin.settings.extensions =
+						this.plugin.fileExtensionManager.toArray();
 					await this.plugin.saveSettings();
 					this.display();
 				});

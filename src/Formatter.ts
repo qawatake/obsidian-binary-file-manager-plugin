@@ -22,7 +22,10 @@ export class Formatter {
 		output = this.replaceDate(output, createdAt);
 		output = this.replaceNow(output);
 		const fullname = path.basename(filepath);
-		const extension = this.plugin.getExtensionMatchedBest(fullname) ?? '';
+		const extension =
+			this.plugin.fileExtensionManager.getExtensionMatchedBest(
+				fullname
+			) ?? '';
 		const nameWithoutExtension = path.basename(fullname, '.' + extension); // add "." to get like ".png"
 		output = this.replacePath(output, filepath);
 		output = this.replaceFullName(output, fullname);
