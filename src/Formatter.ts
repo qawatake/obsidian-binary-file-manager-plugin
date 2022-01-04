@@ -22,17 +22,12 @@ export class Formatter {
 		output = this.replaceDate(output, createdAt);
 		output = this.replaceNow(output);
 		const fullname = path.basename(filepath);
-		const nameWithoutExt = fullname.substring(
-			0,
-			fullname.lastIndexOf(path.extname(filepath))
-		);
+		const extension = this.plugin.getExtensionMatchedBest(fullname) ?? '';
+		const nameWithoutExtension = path.basename(fullname, '.' + extension); // add "." to get like ".png"
 		output = this.replacePath(output, filepath);
 		output = this.replaceFullName(output, fullname);
-		output = this.replaceName(output, nameWithoutExt);
-		output = this.replaceExtension(
-			output,
-			path.extname(filepath).replace(/^\./, '')
-		); // remove "."
+		output = this.replaceName(output, nameWithoutExtension);
+		output = this.replaceExtension(output, extension);
 		return output;
 	}
 

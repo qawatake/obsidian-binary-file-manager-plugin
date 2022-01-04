@@ -153,7 +153,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		return true;
 	}
 
-	private getExtensionMatchedBest(filename: string): string | undefined {
+	getExtensionMatchedBest(filename: string): string | undefined {
 		// investigate extensions from longer to shorter
 		for (let id = 0; id < filename.length; id++) {
 			if (filename[id] !== '.') {
