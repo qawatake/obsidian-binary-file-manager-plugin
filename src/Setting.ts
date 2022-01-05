@@ -145,6 +145,12 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 		descEl.empty();
 		descEl.appendChild(
 			createFragment((fragment) => {
+				fragment.appendText('For more syntax, refer to ');
+				fragment.createEl('a', {
+					href: 'https://github.com/qawatake/obsidian-binary-file-manager-plugin#format-syntax',
+					text: 'format reference',
+				});
+				fragment.createEl('br');
 				fragment.appendText('Your current syntax looks like this: ');
 				fragment.createEl('b', {
 					text: sampleFileName,
