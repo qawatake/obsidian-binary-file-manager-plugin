@@ -9,6 +9,8 @@ By using metadata files, you can take advantage of the rich functionality provie
 
 For example, if you add tags to the metadata of an image file, then you can indirectly access the image file by tag-searching (and following an internal link in the metadata).
 
+[![Image from Gyazo](https://i.gyazo.com/6c46d863e4c31d0815bcf027fdb48f92.gif)](https://gyazo.com/6c46d863e4c31d0815bcf027fdb48f92)
+
 ### Quick start
 1. Install and enable this plugin.
 2. Add a static file like `sample.pdf` to your vault.
