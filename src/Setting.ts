@@ -2,6 +2,7 @@ import BinaryFileManagerPlugin from 'main';
 import { PluginSettingTab, Setting, App, Notice, moment } from 'obsidian';
 import { FolderSuggest } from 'suggesters/FolderSuggester';
 import { FileSuggest } from 'suggesters/FileSuggester';
+import { validFileName } from 'Util';
 
 export class BinaryFileManagerSettingTab extends PluginSettingTab {
 	plugin: BinaryFileManagerPlugin;
@@ -40,20 +41,35 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 							new Notice('File name format must not be blanck');
 							return;
 						}
-						// display sample file name before validation
+
+						const sampleFileName = this.plugin.formatter.format(
+							newFormat,
+							'folder/sample.png',
+							moment.now()
+						);
+
 						this.displaySampleFileNameDesc(
 							setting.descEl,
-							newFormat
+							sampleFileName
 						);
+
+						// check if file name contains valid letters like "/" or ":"
+						const { valid } = validFileName(sampleFileName);
+						if (!valid) {
+							return;
+						}
 
 						this.plugin.settings.filenameFormat = newFormat;
 						this.plugin.saveSettings();
 					});
+
+				const sampleFileName = this.plugin.formatter.format(
+					this.plugin.settings.filenameFormat,
+					'folder/sample.png',
+					moment.now()
+				);
+				this.displaySampleFileNameDesc(setting.descEl, sampleFileName);
 			});
-			this.displaySampleFileNameDesc(
-				setting.descEl,
-				this.plugin.settings.filenameFormat
-			);
 		});
 
 		new Setting(containerEl)
@@ -122,43 +138,26 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 		});
 	}
 
-	displaySampleFileNameDesc(descEl: HTMLElement, format: string): void {
+	displaySampleFileNameDesc(
+		descEl: HTMLElement,
+		sampleFileName: string
+	): void {
 		descEl.empty();
 		descEl.appendChild(
 			createFragment((fragment) => {
 				fragment.appendText('Your current syntax looks like this: ');
 				fragment.createEl('b', {
-					text: this.plugin.formatter.format(
-						format,
-						'folder/sample.png',
-						moment.now()
-					),
+					text: sampleFileName,
 				});
+
+				const { valid, included } = validFileName(sampleFileName);
+				if (!valid && included !== undefined) {
+					fragment.createEl('br');
+					const msgEl = fragment.createEl('span');
+					msgEl.appendText(`${included} must not be included`);
+					msgEl.addClass('binary-file-manager-text-error');
+				}
 			})
 		);
 	}
 }
-
-// const INVALID_CHARS_IN_FILE_NAME = [
-// 	'\\',
-// 	'/',
-// 	':',
-// 	'*',
-// 	'?',
-// 	'"',
-// 	'<',
-// 	'>',
-// 	'|',
-// ];
-// function validFileName(fileName: string): {
-// 	valid: boolean;
-// 	included?: string;
-// } {
-// 	for (const char of fileName) {
-// 		if (INVALID_CHARS_IN_FILE_NAME.includes(char)) {
-// 			return { valid: false, included: char };
-// 		}
-// 	}
-
-// 	return { valid: true };
-// }

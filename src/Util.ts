@@ -32,3 +32,28 @@ async function delay(milliSecond: number): Promise<undefined> {
 	await new Promise((resolve) => setTimeout(resolve, milliSecond));
 	return undefined;
 }
+
+const INVALID_CHARS_IN_FILE_NAME = new Set<string>([
+	'\\',
+	'/',
+	':',
+	'*',
+	'?',
+	'"',
+	'<',
+	'>',
+	'|',
+]);
+
+export function validFileName(fileName: string): {
+	valid: boolean;
+	included?: string;
+} {
+	for (const char of fileName) {
+		if (INVALID_CHARS_IN_FILE_NAME.has(char)) {
+			return { valid: false, included: char };
+		}
+	}
+
+	return { valid: true };
+}
