@@ -6,6 +6,8 @@ const FULLNAME_REGEX = /{{FULLNAME(((:UP)|(:LOW))?)}}/g;
 const EXTENSION_REGEX = /{{EXTENSION(((:UP)|(:LOW))?)}}/g;
 const PATH_REGEX = /{{PATH(((:UP)|(:LOW))?)}}/g;
 const NOW_REGEXP = /{{NOW:([^}\n\r]*)}}/g;
+const LINK_SYNTAX = '{{LINK}}';
+const EMBED_SYNTAX = '{{EMBED}}';
 
 export class Formatter {
 	app: App;
@@ -30,6 +32,8 @@ export class Formatter {
 		output = this.replaceFullName(output, fullname);
 		output = this.replaceName(output, nameWithoutExtension);
 		output = this.replaceExtension(output, extension);
+		output = this.replaceLink(output, filepath);
+		output = this.replaceEmbed(output, filepath);
 		return output;
 	}
 
@@ -111,6 +115,14 @@ export class Formatter {
 				}
 			}
 		);
+	}
+
+	private replaceLink(input: string, filepath: string): string {
+		return input.replace(LINK_SYNTAX, `[[${filepath}]]`);
+	}
+
+	private replaceEmbed(input: string, filepath: string): string {
+		return input.replace(EMBED_SYNTAX, `![[${filepath}]]`);
 	}
 }
 
