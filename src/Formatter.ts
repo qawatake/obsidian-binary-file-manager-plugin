@@ -1,6 +1,5 @@
 import BinaryFileManagerPlugin from 'main';
 import { App, moment } from 'obsidian';
-import * as path from 'path';
 const DATE_REGEXP = /{{CDATE:([^}\n\r]*)}}/g;
 const NAME_REGEX = /{{NAME(((:UP)|(:LOW))?)}}/g;
 const FULLNAME_REGEX = /{{FULLNAME(((:UP)|(:LOW))?)}}/g;
@@ -21,12 +20,12 @@ export class Formatter {
 		let output = input;
 		output = this.replaceDate(output, createdAt);
 		output = this.replaceNow(output);
-		const fullname = path.basename(filepath);
+		const fullname = basename(filepath);
 		const extension =
 			this.plugin.fileExtensionManager.getExtensionMatchedBest(
 				fullname
 			) ?? '';
-		const nameWithoutExtension = path.basename(fullname, '.' + extension); // add "." to get like ".png"
+		const nameWithoutExtension = basename(fullname, extension); // add "." to get like ".png"
 		output = this.replacePath(output, filepath);
 		output = this.replaceFullName(output, fullname);
 		output = this.replaceName(output, nameWithoutExtension);
@@ -113,4 +112,47 @@ export class Formatter {
 			}
 		);
 	}
+}
+
+function cleanPath(filepath: string): string {
+	// Always use forward slash
+	let cleanedPath = filepath;
+	cleanedPath = cleanedPath.replace(/\\/g, '/');
+
+	// Use '/' for root
+	if (cleanedPath === '') {
+		cleanedPath = '/';
+	}
+
+	// Trim start slash
+	for (let i = 0; i < cleanedPath.length; i++) {
+		if (cleanedPath[i] !== '/') {
+			cleanedPath = cleanedPath.substring(i);
+			break;
+		} else if (i === cleanedPath.length - 1) {
+			cleanedPath = '/';
+			break;
+		}
+	}
+
+	// Trim end slash
+	for (let i = cleanedPath.length - 1; i >= 0; i--) {
+		if (cleanedPath[i] !== '/') {
+			break;
+		} else if (i === 0) {
+			cleanedPath = '/';
+			break;
+		}
+	}
+	return cleanedPath;
+}
+
+// extension is like 'png' not '.png'
+function basename(filepath: string, extension?: string): string {
+	const segments = cleanPath(filepath).split('/');
+	console.log('segments', segments);
+	const filename = segments.last() ?? '';
+	console.log('filename', filename);
+	const ext = extension ?? '';
+	return filename.replace(new RegExp(`\\.${ext}$`), '');
 }
