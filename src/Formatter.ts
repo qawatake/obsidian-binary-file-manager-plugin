@@ -162,9 +162,7 @@ function cleanPath(filepath: string): string {
 // extension is like 'png' not '.png'
 function basename(filepath: string, extension?: string): string {
 	const segments = cleanPath(filepath).split('/');
-	console.log('segments', segments);
 	const filename = segments.last() ?? '';
-	console.log('filename', filename);
 	const ext = extension ?? '';
 	return filename.replace(new RegExp(`\\.${ext}$`), '');
 }
