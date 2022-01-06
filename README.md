@@ -28,6 +28,12 @@ You can use the following syntax to format the names and contents of metadata fi
 
 - Replace `<FORMAT>` by a [Moment.js format](https://momentjs.com/docs/#/displaying/format/).
 
+#### Link
+| Syntax | Description |
+| -- | -- |
+| `{{LINK}}` | Internal link like `[[image.png]]` |
+| `{{EMBED}}` | Embedded link like `![[image.png]]` |
+
 #### Path
 | Syntax | Description |
 | -- | -- |
