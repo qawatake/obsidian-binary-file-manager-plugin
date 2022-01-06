@@ -13,6 +13,7 @@ export class FileListAdapter {
 	constructor(app: App, plugin: BinaryFileManagerPlugin) {
 		this.app = app;
 		this.plugin = plugin;
+		this.registeredBinaryFilePaths = new Set<string>();
 		this.app.workspace.onLayoutReady(async () => {
 			this.deleteNonExistingBinaryFiles();
 		});
