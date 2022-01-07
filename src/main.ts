@@ -86,6 +86,39 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			})
 		);
 
+		// Commands
+		this.addCommand({
+			id: 'binary-file-manager-manual-detection',
+			name: 'Create metadata for untracked binary files',
+			callback: async () => {
+				const promises: Promise<void>[] = [];
+				const allFiles = this.app.vault.getFiles();
+				for (const file of allFiles) {
+					if (
+						!(await this.metaDataGenerator.shouldCreateMetaDataFile(
+							file
+						))
+					) {
+						continue;
+					}
+
+					promises.push(
+						this.metaDataGenerator
+							.create(file as TFile)
+							.then(() => {
+								new Notice(
+									`Metadata file of ${file.name} is created.`
+								);
+								this.fileListAdapter.add(file.path);
+							})
+					);
+				}
+				Promise.all(promises).then(() => {
+					this.fileListAdapter.save();
+				});
+			},
+		});
+
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new BinaryFileManagerSettingTab(this.app, this));
 	}
