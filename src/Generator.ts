@@ -1,4 +1,3 @@
-import { FileExtensionManager } from 'Extension';
 import BinaryFileManagerPlugin from 'main';
 import {
 	App,
