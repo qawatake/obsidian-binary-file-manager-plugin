@@ -40,6 +40,10 @@ export class FileListAdapter {
 		return this.registeredBinaryFilePaths.has(filepath);
 	}
 
+	deleteAll(): void {
+		this.registeredBinaryFilePaths = new Set<string>();
+	}
+
 	private async loadBinaryFiles() {
 		const configDir = this.app.vault.configDir;
 		const storageFilePath = normalizePath(

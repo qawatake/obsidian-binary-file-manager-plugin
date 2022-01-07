@@ -1,5 +1,13 @@
 import BinaryFileManagerPlugin from 'main';
-import { PluginSettingTab, Setting, App, Notice, moment } from 'obsidian';
+import {
+	PluginSettingTab,
+	Setting,
+	App,
+	Notice,
+	moment,
+	Modal,
+	ButtonComponent,
+} from 'obsidian';
 import { FolderSuggest } from 'suggesters/FolderSuggester';
 import { FileSuggest } from 'suggesters/FileSuggester';
 import { validFileName } from 'Util';
@@ -150,6 +158,20 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 				});
 			});
 		});
+
+		new Setting(containerEl)
+			.setName('Forget all binary files')
+			.setDesc(
+				'Binary File Manager remembers binary files for which it has created metadata. If it forgets, then it recognizes all binary files as newly created files and tries to create their metadata again.'
+			)
+			.addButton((component) => {
+				component
+					.setButtonText('Forget')
+					.setWarning()
+					.onClick(() => {
+						new ForgetAllModal(this.app, this.plugin).open();
+					});
+			});
 	}
 
 	displaySampleFileNameDesc(
@@ -179,5 +201,48 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 				}
 			})
 		);
+	}
+}
+
+class ForgetAllModal extends Modal {
+	plugin: BinaryFileManagerPlugin;
+
+	constructor(app: App, plugin: BinaryFileManagerPlugin) {
+		super(app);
+		this.plugin = plugin;
+	}
+
+	override onOpen() {
+		const { contentEl, titleEl } = this;
+		titleEl.setText('Forget all');
+		contentEl
+			.createEl('p', {
+				text: 'Are you sure? You cannot undo this action.',
+			})
+			.addClass('mod-warning');
+
+		const buttonContainerEl = contentEl.createEl('div');
+		buttonContainerEl.addClass('modal-button-container');
+
+		new ButtonComponent(buttonContainerEl)
+			.setButtonText('Forget')
+			.setWarning()
+			.onClick(async () => {
+				this.plugin.fileListAdapter.deleteAll();
+				await this.plugin.fileListAdapter.save();
+				new Notice('Binary File Manager forgets all!');
+				this.close();
+			});
+
+		new ButtonComponent(buttonContainerEl)
+			.setButtonText('Cancel')
+			.onClick(() => {
+				this.close();
+			});
+	}
+
+	override onClose() {
+		const { contentEl } = this;
+		contentEl.empty();
 	}
 }
