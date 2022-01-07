@@ -13,7 +13,8 @@ For example, if you add tags to the metadata of an image file, then you can indi
 
 ### Quick start
 1. Install and enable this plugin.
-2. Add a static file like `sample.pdf` to your vault.
+2. Go to the setting tab of Binary File Manager and enable auto detection.
+3. Add a static file like `sample.pdf` to your vault.
 
 Then you will find a meta data file `INFO_sample_PDF.md` in the root directory.
 You can customize the new file location and the templates for names and contents of metadata files.
