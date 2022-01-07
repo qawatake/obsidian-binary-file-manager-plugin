@@ -38,6 +38,16 @@ export class FileExtensionManager {
 		return this.extensions.has(ext);
 	}
 
+	public verify(filepath: string): boolean {
+		// i want to use return so avoid to use forEach
+		for (const ext of this.extensions) {
+			if (filepath.endsWith('.' + ext)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public toArray(): string[] {
 		return Array.from(this.extensions);
 	}

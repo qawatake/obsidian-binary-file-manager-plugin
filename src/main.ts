@@ -89,7 +89,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		// Commands
 		this.addCommand({
 			id: 'binary-file-manager-manual-detection',
-			name: 'Create metadata for untracked binary files',
+			name: 'Create metadata for binary files',
 			callback: async () => {
 				const promises: Promise<void>[] = [];
 				const allFiles = this.app.vault.getFiles();
@@ -113,9 +113,32 @@ export default class BinaryFileManagerPlugin extends Plugin {
 							})
 					);
 				}
-				Promise.all(promises).then(() => {
-					this.fileListAdapter.save();
+				await Promise.all(promises);
+				this.fileListAdapter.save();
+			},
+		});
+
+		this.addCommand({
+			id: 'binary-file-manager-detect-unlinked-binary-files',
+			name: 'Create metadata for unlinked binary files',
+			callback: async () => {
+				const promises: Promise<void>[] = [];
+				const unlinkedFiles =
+					this.metaDataGenerator.findUnlinkedBinaries();
+				unlinkedFiles.forEach((file) => {
+					promises.push(
+						this.metaDataGenerator
+							.create(file as TFile)
+							.then(() => {
+								new Notice(
+									`Metadata file of ${file.name} is created.`
+								);
+								this.fileListAdapter.add(file.path);
+							})
+					);
 				});
+				await Promise.all(promises);
+				this.fileListAdapter.save();
 			},
 		});
 

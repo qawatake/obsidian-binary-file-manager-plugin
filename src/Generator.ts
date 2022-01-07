@@ -1,3 +1,4 @@
+import { FileExtensionManager } from 'Extension';
 import BinaryFileManagerPlugin from 'main';
 import {
 	App,
@@ -157,5 +158,29 @@ export class MetaDataGenerator {
 			TIMEOUT_MILLISECOND,
 			RETRY_NUMBER
 		);
+	}
+
+	findUnlinkedBinaries(): TFile[] {
+		const unlinkedBinaries: TFile[] = [];
+		const linkedPaths = new Set<string>();
+
+		// collect all link destinations
+		Object.values(this.app.metadataCache.resolvedLinks).forEach((links) => {
+			Object.keys(links).forEach((dest) => {
+				linkedPaths.add(dest);
+			});
+		});
+
+		// collect only unlinked binaries
+		this.app.vault.getFiles().forEach((file) => {
+			const isUnlinkedBinary =
+				!linkedPaths.has(file.path) &&
+				this.plugin.fileExtensionManager.verify(file.path);
+			if (isUnlinkedBinary) {
+				unlinkedBinaries.push(file);
+			}
+		});
+
+		return unlinkedBinaries;
 	}
 }
