@@ -18,8 +18,22 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
+			.setName('Enable auto detection')
+			.setDesc(
+				'Detects new binary files and create metadata automatically.'
+			)
+			.addToggle((component) => {
+				component
+					.setValue(this.plugin.settings.autoDetection)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.autoDetection = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
 			.setName('New file location')
-			.setDesc('New meta data file will be placed here')
+			.setDesc('New metadata file will be placed here')
 			.addSearch((component) => {
 				new FolderSuggest(this.app, component.inputEl);
 				component

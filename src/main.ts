@@ -6,6 +6,7 @@ import { FileListAdapter } from 'FileList';
 import { MetaDataGenerator } from 'Generator';
 
 interface BinaryFileManagerSettings {
+	autoDetection: boolean;
 	extensions: string[];
 	folder: string;
 	filenameFormat: string;
@@ -14,6 +15,7 @@ interface BinaryFileManagerSettings {
 }
 
 const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
+	autoDetection: false,
 	extensions: [
 		'png',
 		'jpg',
@@ -56,6 +58,9 @@ export default class BinaryFileManagerPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.vault.on('create', async (file: TAbstractFile) => {
+				if (!this.settings.autoDetection) {
+					return;
+				}
 				if (
 					!(await this.metaDataGenerator.shouldCreateMetaDataFile(
 						file
@@ -65,7 +70,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 				}
 
 				await this.metaDataGenerator.create(file as TFile);
-				new Notice(`Meta data file of ${file.name} is created.`);
+				new Notice(`Metadata file of ${file.name} is created.`);
 				this.fileListAdapter.add(file.path);
 				await this.fileListAdapter.save();
 			})
