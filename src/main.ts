@@ -9,6 +9,7 @@ interface BinaryFileManagerSettings {
 	autoDetection: boolean;
 	extensions: string[];
 	folder: string;
+	binaryFilePath: string;
 	filenameFormat: string;
 	templatePath: string;
 	useTemplater: boolean;
@@ -36,6 +37,7 @@ const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 		'pdf',
 	],
 	folder: '/',
+	binaryFilePath: '/',
 	filenameFormat: 'INFO_{{NAME}}_{{EXTENSION:UP}}',
 	templatePath: '',
 	useTemplater: false,

@@ -118,6 +118,20 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 					});
 			});
 
+		new Setting(containerEl)
+			.setName('Binary file parent folder')
+			.setDesc('Only this folder will be watched for new files')
+			.addSearch((component) => {
+				new FolderSuggest(this.app, component.inputEl);
+				component
+					.setPlaceholder('Example: folder1/folder2')
+					.setValue(this.plugin.settings.binaryFilePath)
+					.onChange((newFolder) => {
+						this.plugin.settings.binaryFilePath = newFolder;
+						this.plugin.saveSettings();
+					});
+			});
+
 		let extensionToBeAdded: string;
 		new Setting(containerEl)
 			.setName('Extension to be watched')
