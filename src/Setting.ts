@@ -48,7 +48,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 					.setPlaceholder('Example: folder1/folder2')
 					.setValue(this.plugin.settings.folder)
 					.onChange((newFolder) => {
-						this.plugin.settings.folder = newFolder;
+						this.plugin.settings.folder = newFolder.trim();
 						this.plugin.saveSettings();
 					});
 			});
