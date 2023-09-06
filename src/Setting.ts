@@ -41,14 +41,18 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('New file location')
-			.setDesc('New metadata file will be placed here')
+			.setDesc(createFragment(fragment => {
+				fragment.appendText('New metadata file will be placed here')
+				fragment.createEl("br")
+				fragment.appendText('Set to "./" to place in the same folder as the original file.')
+			}))
 			.addSearch((component) => {
 				new FolderSuggest(this.app, component.inputEl);
 				component
 					.setPlaceholder('Example: folder1/folder2')
 					.setValue(this.plugin.settings.folder)
 					.onChange((newFolder) => {
-						this.plugin.settings.folder = newFolder;
+						this.plugin.settings.folder = newFolder.trim();
 						this.plugin.saveSettings();
 					});
 			});
