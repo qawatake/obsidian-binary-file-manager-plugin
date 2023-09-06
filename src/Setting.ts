@@ -60,7 +60,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 					.onChange((input) => {
 						const newFormat = input.trim().replace(/\.md$/, '');
 						if (newFormat === '') {
-							new Notice('File name format must not be blanck');
+							new Notice('File name format must not be blank');
 							return;
 						}
 
