@@ -14,6 +14,7 @@ interface BinaryFileManagerSettings {
 	filenameFormat: string;
 	templatePath: string;
 	useTemplater: boolean;
+	contextMenuTemplatePath: string; // NEW: separate template for context menu
 }
 
 const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
@@ -42,7 +43,8 @@ const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 	attachmentsFilePath: '/',
 	filenameFormat: 'INFO_{{NAME}}_{{EXTENSION:UP}}',
 	templatePath: '',
-	useTemplater: false
+	useTemplater: false,
+	contextMenuTemplatePath: ''
 };
 
 export default class BinaryFileManagerPlugin extends Plugin {
@@ -150,11 +152,11 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		this.addSettingTab(new BinaryFileManagerSettingTab(this.app, this));
 
 		// Add context menu option for binary files
-		this.registerEvent(
-			this.app.workspace.on('file-menu', (menu, file) => {
-				if (!(file instanceof TFile)) return;
-				const ext = this.fileExtensionManager.getExtensionMatchedBest(file.name);
-				if (!ext) return;
+			this.registerEvent(
+				this.app.workspace.on('file-menu', (menu, file) => {
+					if (!(file instanceof TFile)) return;
+					const ext = this.fileExtensionManager.getExtensionMatchedBest(file.name);
+					if (!ext) return;
 
 					menu.addItem((item) => {
 						item.setTitle('Create note from binary file')
@@ -162,12 +164,17 @@ export default class BinaryFileManagerPlugin extends Plugin {
 							.onClick(async () => {
 								// Use the file's current directory as the base
 								const fileDir = file.parent?.path || '';
-								await this.metaDataGenerator.create(file, fileDir);
+								// Pass contextMenuTemplatePath as override
+								await this.metaDataGenerator.create(
+									file,
+									fileDir,
+									this.settings.contextMenuTemplatePath || undefined
+								);
 								new Notice(`Created note from "${file.name}" in "${fileDir}".`);
 							});
 					});
-			})
-		);
+				})
+			);
 	}
 
 	// onunload() {}

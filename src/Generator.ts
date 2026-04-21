@@ -61,14 +61,20 @@ export class MetaDataGenerator {
 	 * @param file The binary file
 	 * @param baseDir Optional base directory for the note and attachments (default: plugin.settings.folder)
 	 */
-	async create(file: TFile, baseDir?: string) {
+	/**
+	 * Create a metadata note for a binary file.
+	 * @param file The binary file
+	 * @param baseDir Optional base directory for the note and attachments (default: plugin.settings.folder)
+	 * @param templatePathOverride Optional template path to use instead of the default
+	 */
+	async create(file: TFile, baseDir?: string, templatePathOverride?: string) {
 		const folder = baseDir || this.plugin.settings.folder;
 		const attachmentsFolder = `${folder}/_attachments`;
 		const metaDataFileName = this.uniquefyMetaDataFileName(
 			this.generateMetaDataFileName(file), folder
 		);
 		const metaDataFilePath = `${folder}/${metaDataFileName}`;
-		await this.createMetaDataFile(metaDataFilePath, file as TFile, attachmentsFolder);
+		await this.createMetaDataFile(metaDataFilePath, file as TFile, attachmentsFolder, templatePathOverride);
 	}
 
 	private generateMetaDataFileName(file: TFile): string {
@@ -133,9 +139,10 @@ export class MetaDataGenerator {
 	private async createMetaDataFile(
 		metaDataFilePath: string,
 		binaryFile: TFile,
-		attachmentsFolder: string
+		attachmentsFolder: string,
+		templatePathOverride?: string
 	): Promise<void> {
-		const templateContent = await this.fetchTemplateContent();
+		const templateContent = await this.fetchTemplateContent(templatePathOverride);
 		// Move the binary file to the attachments folder
 		const fullFilePath = await this.moveBinaryFile(binaryFile, attachmentsFolder);
 		// process by Templater
@@ -175,16 +182,15 @@ export class MetaDataGenerator {
 		}
 	}
 
-	private async fetchTemplateContent(): Promise<string> {
-		if (this.plugin.settings.templatePath === '') {
+	private async fetchTemplateContent(templatePathOverride?: string): Promise<string> {
+		const templatePath = templatePathOverride !== undefined ? templatePathOverride : this.plugin.settings.templatePath;
+		if (templatePath === '') {
 			return DEFAULT_TEMPLATE_CONTENT;
 		}
 
 		const templateFile = await retry(
 			() => {
-				return this.app.vault.getAbstractFileByPath(
-					this.plugin.settings.templatePath
-				);
+				return this.app.vault.getAbstractFileByPath(templatePath);
 			},
 			TIMEOUT_MILLISECOND,
 			RETRY_NUMBER,
@@ -192,7 +198,7 @@ export class MetaDataGenerator {
 		);
 
 		if (!(templateFile instanceof TFile)) {
-			const msg = `Template file ${this.plugin.settings.templatePath} is invalid`;
+			const msg = `Template file ${templatePath} is invalid`;
 			console.log(msg);
 			new Notice(msg);
 			return DEFAULT_TEMPLATE_CONTENT;

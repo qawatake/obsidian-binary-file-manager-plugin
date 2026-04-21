@@ -139,20 +139,36 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 
 		// Create the "Template file location" search setting and initially hide or show it
 		const templateSetting = new Setting(containerEl)
-		.setName('Template file location')
-		.addSearch((component) => {
-			new FileSuggest(this.app, component.inputEl);
-			component
-				.setPlaceholder('Example: folder1/note')
-				.setValue(this.plugin.settings.templatePath)
-				.onChange((newTemplateFile) => {
-					this.plugin.settings.templatePath = newTemplateFile;
-					this.plugin.saveSettings();
-				});
-		});
+			.setName('Template file location (watched folder)')
+			.addSearch((component) => {
+				new FileSuggest(this.app, component.inputEl);
+				component
+					.setPlaceholder('Example: folder1/note')
+					.setValue(this.plugin.settings.templatePath)
+					.onChange((newTemplateFile) => {
+						this.plugin.settings.templatePath = newTemplateFile;
+						this.plugin.saveSettings();
+					});
+			});
 
 		// Set the initial visibility of the "Template file location" setting
 		templateSetting.settingEl.style.display = this.plugin.settings.useTemplater ? 'block' : 'none';
+
+		// NEW: Context menu template path
+		const contextMenuTemplateSetting = new Setting(containerEl)
+			.setName('Template file location (context menu)')
+			.setDesc('Template to use when creating metadata from the right-click menu. Leave blank to use the default.')
+			.addSearch((component) => {
+				new FileSuggest(this.app, component.inputEl);
+				component
+					.setPlaceholder('Example: folder1/context-menu-template')
+					.setValue(this.plugin.settings.contextMenuTemplatePath)
+					.onChange((newTemplateFile) => {
+						this.plugin.settings.contextMenuTemplatePath = newTemplateFile;
+						this.plugin.saveSettings();
+					});
+			});
+		contextMenuTemplateSetting.settingEl.style.display = this.plugin.settings.useTemplater ? 'block' : 'none';
 
 
 		let extensionToBeAdded: string;
