@@ -1,4 +1,4 @@
-import { FileManager, Notice, Plugin, TAbstractFile, TFile } from 'obsidian';
+import { Notice, Plugin, TAbstractFile, TFile } from 'obsidian';
 import { Formatter } from 'Formatter';
 import { BinaryFileManagerSettingTab } from 'Setting';
 import { FileExtensionManager } from 'Extension';
@@ -14,6 +14,7 @@ interface BinaryFileManagerSettings {
 	filenameFormat: string;
 	templatePath: string;
 	useTemplater: boolean;
+	contextMenuTemplatePath: string; // NEW: separate template for context menu
 }
 
 const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
@@ -42,15 +43,16 @@ const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 	attachmentsFilePath: '/',
 	filenameFormat: 'INFO_{{NAME}}_{{EXTENSION:UP}}',
 	templatePath: '',
-	useTemplater: false
+	useTemplater: false,
+	contextMenuTemplatePath: ''
 };
 
 export default class BinaryFileManagerPlugin extends Plugin {
-	settings: BinaryFileManagerSettings;
-	formatter: Formatter;
-	metaDataGenerator: MetaDataGenerator;
-	fileExtensionManager: FileExtensionManager;
-	fileListAdapter: FileListAdapter;
+	settings!: BinaryFileManagerSettings;
+	formatter!: Formatter;
+	metaDataGenerator!: MetaDataGenerator;
+	fileExtensionManager!: FileExtensionManager;
+	fileListAdapter!: FileListAdapter;
 
 	override async onload() {
 		await this.loadSettings();
@@ -148,6 +150,31 @@ export default class BinaryFileManagerPlugin extends Plugin {
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new BinaryFileManagerSettingTab(this.app, this));
+
+		// Add context menu option for binary files
+			this.registerEvent(
+				this.app.workspace.on('file-menu', (menu, file) => {
+					if (!(file instanceof TFile)) return;
+					const ext = this.fileExtensionManager.getExtensionMatchedBest(file.name);
+					if (!ext) return;
+
+					menu.addItem((item) => {
+						item.setTitle('Create note from binary file')
+							.setIcon('arrow-right')
+							.onClick(async () => {
+								// Use the file's current directory as the base
+								const fileDir = file.parent?.path || '';
+								// Pass contextMenuTemplatePath as override
+								await this.metaDataGenerator.create(
+									file,
+									fileDir,
+									this.settings.contextMenuTemplatePath || undefined
+								);
+								new Notice(`Created note from "${file.name}" in "${fileDir}".`);
+							});
+					});
+				})
+			);
 	}
 
 	// onunload() {}

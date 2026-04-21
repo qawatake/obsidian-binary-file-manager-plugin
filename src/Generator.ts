@@ -55,13 +55,26 @@ export class MetaDataGenerator {
 		return true;
 	}
 
-	async create(file: TFile) {
-		const metaDataFileName = this.uniquefyMetaDataFileName(
-			this.generateMetaDataFileName(file)
-		);
-		const metaDataFilePath = `${this.plugin.settings.folder}/${metaDataFileName}`;
 
-		await this.createMetaDataFile(metaDataFilePath, file as TFile);
+	/**
+	 * Create a metadata note for a binary file.
+	 * @param file The binary file
+	 * @param baseDir Optional base directory for the note and attachments (default: plugin.settings.folder)
+	 */
+	/**
+	 * Create a metadata note for a binary file.
+	 * @param file The binary file
+	 * @param baseDir Optional base directory for the note and attachments (default: plugin.settings.folder)
+	 * @param templatePathOverride Optional template path to use instead of the default
+	 */
+	async create(file: TFile, baseDir?: string, templatePathOverride?: string) {
+		const folder = baseDir || this.plugin.settings.folder;
+		const attachmentsFolder = `${folder}/_attachments`;
+		const metaDataFileName = this.uniquefyMetaDataFileName(
+			this.generateMetaDataFileName(file), folder
+		);
+		const metaDataFilePath = `${folder}/${metaDataFileName}`;
+		await this.createMetaDataFile(metaDataFilePath, file as TFile, attachmentsFolder, templatePathOverride);
 	}
 
 	private generateMetaDataFileName(file: TFile): string {
@@ -73,9 +86,9 @@ export class MetaDataGenerator {
 		return metaDataFileName;
 	}
 
-	private uniquefyMetaDataFileName(metaDataFileName: string): string {
+	private uniquefyMetaDataFileName(metaDataFileName: string, folder: string): string {
 		const metaDataFilePath = normalizePath(
-			`${this.plugin.settings.folder}/${metaDataFileName}`
+			`${folder}/${metaDataFileName}`
 		);
 		if (this.app.vault.getAbstractFileByPath(metaDataFilePath)) {
 			return `CONFLICT-${moment().format(
@@ -86,12 +99,8 @@ export class MetaDataGenerator {
 		}
 	}
 
-	private uniquefyBinaryFileName(binaryFileName: string): string {
-		const binaryFilePath = normalizePath(
-			`${this.plugin.settings.folder}/${binaryFileName}`
-		);
-		const attachmentsFilePath = `${this.plugin.settings.attachmentsFilePath}`;
-		const attachmentFullFilePath = attachmentsFilePath+"/"+binaryFileName;
+	private uniquefyBinaryFileName(binaryFileName: string, attachmentsFolder: string): string {
+		const attachmentFullFilePath = attachmentsFolder+"/"+binaryFileName;
 		if (this.app.vault.getAbstractFileByPath(attachmentFullFilePath)) {
 			return `CONFLICT-${moment().format(
 				'YYYY-MM-DD-hh-mm-ss'
@@ -102,44 +111,40 @@ export class MetaDataGenerator {
 	}
 
 	private async moveBinaryFile(
-    binaryFile: TFile
-	): Promise<void> {
-
-		
+		binaryFile: TFile,
+		attachmentsFolder: string
+	): Promise<string> {
 		const binaryFileName = this.uniquefyBinaryFileName(
-			binaryFile.basename+"."+binaryFile.extension
+			binaryFile.basename+"."+binaryFile.extension,
+			attachmentsFolder
 		);
-		const attachmentsFilePath = `${this.plugin.settings.attachmentsFilePath}`;
-		const fullFilePath = attachmentsFilePath+"/"+binaryFileName;
-
+		const fullFilePath = attachmentsFolder+"/"+binaryFileName;
+		// Ensure attachments folder exists
+		let folder = this.app.vault.getAbstractFileByPath(attachmentsFolder);
+		if (!folder) {
+			await this.app.vault.createFolder(attachmentsFolder);
+		}
 		// move binary file into the attachments folder
 		try {
 			await this.app.fileManager.renameFile(binaryFile, fullFilePath);
 			new Notice(`Binary file of ${binaryFileName} has been moved.`);
+			return fullFilePath;
 		} catch (err) {
 			new Notice(`Problem moving the binary file of ${binaryFileName} into the attachments folder.`);
 			alert(err);
+			return binaryFile.path;
 		}
 	}
 
 	private async createMetaDataFile(
 		metaDataFilePath: string,
-		binaryFile: TFile
+		binaryFile: TFile,
+		attachmentsFolder: string,
+		templatePathOverride?: string
 	): Promise<void> {
-
-		//  await sleep(1000);
-
-		const templateContent = await this.fetchTemplateContent();
-		const attachmentsFilePath = `${this.plugin.settings.attachmentsFilePath}`;
-		const binaryFileName = binaryFile.basename+"."+binaryFile.extension;
-		const fullFilePath = attachmentsFilePath+"/"+binaryFileName;
-
-		try {
-			await this.moveBinaryFile(binaryFile);
-		} catch(err) {
-			alert(err);
-		}
-
+		const templateContent = await this.fetchTemplateContent(templatePathOverride);
+		// Move the binary file to the attachments folder
+		const fullFilePath = await this.moveBinaryFile(binaryFile, attachmentsFolder);
 		// process by Templater
 		const templaterPlugin = await this.getTemplaterPlugin();
 		if (!(this.plugin.settings.useTemplater && templaterPlugin)) {
@@ -151,13 +156,11 @@ export class MetaDataGenerator {
 					binaryFile.stat.ctime
 				)
 			);
-
 		} else {
 			const targetFile = await this.app.vault.create(
 				metaDataFilePath,
 				''
 			);
-
 			try {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
@@ -165,12 +168,11 @@ export class MetaDataGenerator {
 					{ target_file: targetFile, run_mode: 4 },
 					this.plugin.formatter.format(
 						templateContent,
-						binaryFile.path,
+						fullFilePath,
 						binaryFile.stat.ctime
 					)
 				);
 				this.app.vault.modify(targetFile, content);
-				
 			} catch (err) {
 				new Notice(
 					'ERROR in Binary File Manager Plugin: failed to connect to Templater. Your Templater version may not be supported.'
@@ -180,16 +182,15 @@ export class MetaDataGenerator {
 		}
 	}
 
-	private async fetchTemplateContent(): Promise<string> {
-		if (this.plugin.settings.templatePath === '') {
+	private async fetchTemplateContent(templatePathOverride?: string): Promise<string> {
+		const templatePath = templatePathOverride !== undefined ? templatePathOverride : this.plugin.settings.templatePath;
+		if (templatePath === '') {
 			return DEFAULT_TEMPLATE_CONTENT;
 		}
 
 		const templateFile = await retry(
 			() => {
-				return this.app.vault.getAbstractFileByPath(
-					this.plugin.settings.templatePath
-				);
+				return this.app.vault.getAbstractFileByPath(templatePath);
 			},
 			TIMEOUT_MILLISECOND,
 			RETRY_NUMBER,
@@ -197,7 +198,7 @@ export class MetaDataGenerator {
 		);
 
 		if (!(templateFile instanceof TFile)) {
-			const msg = `Template file ${this.plugin.settings.templatePath} is invalid`;
+			const msg = `Template file ${templatePath} is invalid`;
 			console.log(msg);
 			new Notice(msg);
 			return DEFAULT_TEMPLATE_CONTENT;

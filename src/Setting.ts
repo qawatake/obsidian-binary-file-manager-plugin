@@ -139,20 +139,36 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 
 		// Create the "Template file location" search setting and initially hide or show it
 		const templateSetting = new Setting(containerEl)
-		.setName('Template file location')
-		.addSearch((component) => {
-			new FileSuggest(this.app, component.inputEl);
-			component
-				.setPlaceholder('Example: folder1/note')
-				.setValue(this.plugin.settings.templatePath)
-				.onChange((newTemplateFile) => {
-					this.plugin.settings.templatePath = newTemplateFile;
-					this.plugin.saveSettings();
-				});
-		});
+			.setName('Template file location (watched folder)')
+			.addSearch((component) => {
+				new FileSuggest(this.app, component.inputEl);
+				component
+					.setPlaceholder('Example: folder1/note')
+					.setValue(this.plugin.settings.templatePath)
+					.onChange((newTemplateFile) => {
+						this.plugin.settings.templatePath = newTemplateFile;
+						this.plugin.saveSettings();
+					});
+			});
 
 		// Set the initial visibility of the "Template file location" setting
 		templateSetting.settingEl.style.display = this.plugin.settings.useTemplater ? 'block' : 'none';
+
+		// NEW: Context menu template path
+		const contextMenuTemplateSetting = new Setting(containerEl)
+			.setName('Template file location (context menu)')
+			.setDesc('Template to use when creating metadata from the right-click menu. Leave blank to use the default.')
+			.addSearch((component) => {
+				new FileSuggest(this.app, component.inputEl);
+				component
+					.setPlaceholder('Example: folder1/context-menu-template')
+					.setValue(this.plugin.settings.contextMenuTemplatePath)
+					.onChange((newTemplateFile) => {
+						this.plugin.settings.contextMenuTemplatePath = newTemplateFile;
+						this.plugin.saveSettings();
+					});
+			});
+		contextMenuTemplateSetting.settingEl.style.display = this.plugin.settings.useTemplater ? 'block' : 'none';
 
 
 		let extensionToBeAdded: string;
@@ -184,16 +200,22 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 				});
 			});
 
+
+		// Render extensions as inline chips
+		const extContainer = containerEl.createDiv('binary-file-manager-extensions-container');
 		this.plugin.settings.extensions.forEach((ext) => {
-			new Setting(containerEl).setName(ext).addExtraButton((cb) => {
-				cb.setIcon('cross').onClick(async () => {
-					this.plugin.fileExtensionManager.delete(ext);
-					this.plugin.settings.extensions =
-						this.plugin.fileExtensionManager.toArray();
-					await this.plugin.saveSettings();
-					this.display();
-				});
-			});
+			const chip = extContainer.createDiv('binary-file-manager-extension-chip');
+			chip.setText(ext);
+			const removeBtn = chip.createEl('button', { text: '✕' });
+			removeBtn.addClass('remove-btn');
+			removeBtn.setAttr('aria-label', `Remove ${ext}`);
+			removeBtn.onclick = async (e) => {
+				e.preventDefault();
+				this.plugin.fileExtensionManager.delete(ext);
+				this.plugin.settings.extensions = this.plugin.fileExtensionManager.toArray();
+				await this.plugin.saveSettings();
+				this.display();
+			};
 		});
 
 		new Setting(containerEl)
