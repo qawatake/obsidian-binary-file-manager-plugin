@@ -184,16 +184,22 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 				});
 			});
 
+
+		// Render extensions as inline chips
+		const extContainer = containerEl.createDiv('binary-file-manager-extensions-container');
 		this.plugin.settings.extensions.forEach((ext) => {
-			new Setting(containerEl).setName(ext).addExtraButton((cb) => {
-				cb.setIcon('cross').onClick(async () => {
-					this.plugin.fileExtensionManager.delete(ext);
-					this.plugin.settings.extensions =
-						this.plugin.fileExtensionManager.toArray();
-					await this.plugin.saveSettings();
-					this.display();
-				});
-			});
+			const chip = extContainer.createDiv('binary-file-manager-extension-chip');
+			chip.setText(ext);
+			const removeBtn = chip.createEl('button', { text: '✕' });
+			removeBtn.addClass('remove-btn');
+			removeBtn.setAttr('aria-label', `Remove ${ext}`);
+			removeBtn.onclick = async (e) => {
+				e.preventDefault();
+				this.plugin.fileExtensionManager.delete(ext);
+				this.plugin.settings.extensions = this.plugin.fileExtensionManager.toArray();
+				await this.plugin.saveSettings();
+				this.display();
+			};
 		});
 
 		new Setting(containerEl)
