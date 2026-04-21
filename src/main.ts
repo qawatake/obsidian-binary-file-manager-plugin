@@ -157,13 +157,13 @@ export default class BinaryFileManagerPlugin extends Plugin {
 				if (!ext) return;
 
 					menu.addItem((item) => {
-						item.setTitle('Move to _attachments and create note')
+						item.setTitle('Create note from binary file')
 							.setIcon('arrow-right')
 							.onClick(async () => {
 								// Use the file's current directory as the base
 								const fileDir = file.parent?.path || '';
 								await this.metaDataGenerator.create(file, fileDir);
-								new Notice('Moved to _attachments and created note (with Templater if enabled, in current directory).');
+								new Notice(`Created note from "${file.name}" in "${fileDir}".`);
 							});
 					});
 			})
