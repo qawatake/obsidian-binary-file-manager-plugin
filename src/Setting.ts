@@ -40,6 +40,25 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
+			.setName('Ignored directories')
+			.setDesc(
+				'Directory paths to ignore during auto detection. One path per line. Wildcards supported (e.g., archives/*, *inbox)'
+			)
+			.addTextArea((textArea) => {
+				textArea
+					.setPlaceholder('archives/*\n*inbox\ntemp/')
+					.setValue(this.plugin.settings.ignoredPaths.join('\n'))
+					.onChange(async (value: string) => {
+						this.plugin.settings.ignoredPaths = value
+							.split('\n')
+							.map((path) => path.trim())
+							.filter((path) => path.length > 0);
+						await this.plugin.saveSettings();
+					});
+				textArea.inputEl.rows = 4;
+			});
+
+		new Setting(containerEl)
 			.setName('New file location')
 			.setDesc('New metadata file will be placed here')
 			.addSearch((component) => {
