@@ -1,4 +1,4 @@
-import BinaryFileManagerPlugin from 'main';
+import BinaryFileManagerPlugin, { WatchedFolderSettings } from 'main';
 import {
 	App,
 	normalizePath,
@@ -9,7 +9,7 @@ import {
 	Plugin,
 } from 'obsidian';
 import { UncoveredApp } from 'Uncover';
-import { retry, sleep } from 'Util';
+import { retry } from 'Util';
 
 const TEMPLATER_PLUGIN_NAME = 'templater-obsidian';
 const DEFAULT_TEMPLATE_CONTENT = ``;
@@ -31,14 +31,10 @@ export class MetaDataGenerator {
 			return false;
 		}
 
-		let filePath = file.path.toString();
-		let folderPath = filePath.substring(0,filePath.lastIndexOf("/"));
+		const filePath = file.path.toString();
+		const folderPath = filePath.substring(0,filePath.lastIndexOf("/"));
 
-		if (
-			!(folderPath === (
-				normalizePath(this.plugin.settings.binaryFilePath)
-			))
-		) {
+		if (!this.getWatchedFolderSettings(folderPath)) {
 			return false;
 		}
 
@@ -55,6 +51,22 @@ export class MetaDataGenerator {
 		return true;
 	}
 
+	getWatchedFolderSettings(path: string): WatchedFolderSettings | undefined {
+		if (normalizePath(this.plugin.settings.binaryFilePath || '/') === normalizePath(path || '/')) {
+			return {
+				binaryFilePath: this.plugin.settings.binaryFilePath,
+				attachmentsFilePath: this.plugin.settings.attachmentsFilePath,
+				folder: this.plugin.settings.folder,
+				filenameFormat: this.plugin.settings.filenameFormat,
+				templatePath: this.plugin.settings.templatePath,
+				useTemplater: this.plugin.settings.useTemplater,
+			};
+		}
+		return this.plugin.settings.watchedFolders.find(
+			(settings) => normalizePath(settings.binaryFilePath || '/') === normalizePath(path || '/')
+		);
+	}
+
 
 	/**
 	 * Create a metadata note for a binary file.
@@ -68,8 +80,10 @@ export class MetaDataGenerator {
 	 * @param templatePathOverride Optional template path to use instead of the default
 	 */
 	async create(file: TFile, baseDir?: string, templatePathOverride?: string) {
-		const folder = baseDir || this.plugin.settings.folder;
-		const attachmentsFolder = `${folder}/_attachments`;
+		const watchedSettings = this.getWatchedFolderSettings(file.parent?.path || '');
+		const settings = watchedSettings || this.plugin.settings;
+		const folder = baseDir || settings.folder;
+		const attachmentsFolder = settings.attachmentsFilePath || `${folder}/_attachments`;
 		const metaDataFileName = this.uniquefyMetaDataFileName(
 			this.generateMetaDataFileName(file), folder
 		);
@@ -78,8 +92,9 @@ export class MetaDataGenerator {
 	}
 
 	private generateMetaDataFileName(file: TFile): string {
+		const settings = this.getWatchedFolderSettings(file.parent?.path || '') || this.plugin.settings;
 		const metaDataFileName = `${this.plugin.formatter.format(
-			this.plugin.settings.filenameFormat,
+			settings.filenameFormat,
 			file.path,
 			file.stat.ctime
 		)}.md`;
@@ -120,7 +135,7 @@ export class MetaDataGenerator {
 		);
 		const fullFilePath = attachmentsFolder+"/"+binaryFileName;
 		// Ensure attachments folder exists
-		let folder = this.app.vault.getAbstractFileByPath(attachmentsFolder);
+		const folder = this.app.vault.getAbstractFileByPath(attachmentsFolder);
 		if (!folder) {
 			await this.app.vault.createFolder(attachmentsFolder);
 		}
@@ -142,12 +157,13 @@ export class MetaDataGenerator {
 		attachmentsFolder: string,
 		templatePathOverride?: string
 	): Promise<void> {
-		const templateContent = await this.fetchTemplateContent(templatePathOverride);
+		const settings = this.getWatchedFolderSettings(binaryFile.parent?.path || '') || this.plugin.settings;
+		const templateContent = await this.fetchTemplateContent(templatePathOverride, settings.templatePath);
 		// Move the binary file to the attachments folder
 		const fullFilePath = await this.moveBinaryFile(binaryFile, attachmentsFolder);
 		// process by Templater
 		const templaterPlugin = await this.getTemplaterPlugin();
-		if (!(this.plugin.settings.useTemplater && templaterPlugin)) {
+		if (!(settings.useTemplater && templaterPlugin)) {
 			this.app.vault.create(
 				metaDataFilePath,
 				this.plugin.formatter.format(
@@ -182,8 +198,8 @@ export class MetaDataGenerator {
 		}
 	}
 
-	private async fetchTemplateContent(templatePathOverride?: string): Promise<string> {
-		const templatePath = templatePathOverride !== undefined ? templatePathOverride : this.plugin.settings.templatePath;
+	private async fetchTemplateContent(templatePathOverride?: string, defaultTemplatePath?: string): Promise<string> {
+		const templatePath = templatePathOverride !== undefined ? templatePathOverride : (defaultTemplatePath ?? this.plugin.settings.templatePath);
 		if (templatePath === '') {
 			return DEFAULT_TEMPLATE_CONTENT;
 		}

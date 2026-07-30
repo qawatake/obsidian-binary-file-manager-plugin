@@ -38,3 +38,20 @@
 .binary-file-manager-extension-chip .remove-btn:hover {
 	color: var(--text-error);
 }
+
+.binary-file-manager-watched-folder {
+	margin: 1em 0;
+	padding: 0.75em 1em;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
+
+.binary-file-manager-watched-folder summary {
+	cursor: pointer;
+	font-weight: var(--font-semibold);
+}
+
+.binary-file-manager-watched-folder h4 {
+	display: none;
+}

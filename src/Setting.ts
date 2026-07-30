@@ -28,7 +28,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Enable auto detection')
 			.setDesc(
-				'Detects new binary files and create metadata automatically.'
+				'Detects new binary files and creates notes automatically.'
 			)
 			.addToggle((component) => {
 				component
@@ -55,7 +55,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Attachments folder')
-			.setDesc('Binary files will be moved here after metadata creation')
+			.setDesc('Binary files will be moved here after note creation')
 			.addSearch((component) => {
 				new FolderSuggest(this.app, component.inputEl);
 				component
@@ -68,8 +68,8 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Metadata location')
-			.setDesc('New metadata file will be placed here')
+			.setName('Note location')
+			.setDesc('New note will be placed here')
 			.addSearch((component) => {
 				new FolderSuggest(this.app, component.inputEl);
 				component
@@ -169,8 +169,31 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 					});
 			});
 		contextMenuTemplateSetting.settingEl.style.display = this.plugin.settings.useTemplater ? 'block' : 'none';
+		containerEl.createEl('h3', { text: 'Watched folders' });
 
+		// Keep the default folder's settings compact as well, matching additional folders.
+		const defaultFolderSection = containerEl.createEl('details', { cls: 'binary-file-manager-watched-folder' });
+		defaultFolderSection.createEl('summary', { text: this.plugin.settings.binaryFilePath || 'Default watched folder' });
+		const defaultFolderSettings = Array.from(containerEl.children).slice(1, 8);
+		defaultFolderSettings.forEach((setting) => defaultFolderSection.appendChild(setting));
+		containerEl.insertBefore(defaultFolderSection, containerEl.children[2]);
 
+		this.plugin.settings.watchedFolders.slice(1).forEach((watched, offset) => {
+			const index = offset + 1;
+			const section = containerEl.createEl('details', { cls: 'binary-file-manager-watched-folder' });
+			section.createEl('summary', { text: watched.binaryFilePath || `Watched folder ${index + 1}` });
+			section.createEl('h4', { text: `Watched folder ${index + 1}` });
+			this.addFolderSetting(section, watched, 'Watched folder', 'binaryFilePath');
+			this.addFolderSetting(section, watched, 'Attachments folder', 'attachmentsFilePath');
+			this.addFolderSetting(section, watched, 'Note location', 'folder');
+			new Setting(section).setName('File name format').addText((input) => input.setValue(watched.filenameFormat).onChange(async (value) => { watched.filenameFormat = value.trim().replace(/\.md$/, ''); await this.plugin.saveSettings(); }));
+			new Setting(section).setName('Use Templater').addToggle((toggle) => toggle.setValue(watched.useTemplater).onChange(async (value) => { watched.useTemplater = value; await this.plugin.saveSettings(); }));
+			new Setting(section).setName('Template file location').addSearch((input) => { new FileSuggest(this.app, input.inputEl); input.setValue(watched.templatePath).onChange(async (value) => { watched.templatePath = value; await this.plugin.saveSettings(); }); });
+			new Setting(section).addButton((button) => button.setButtonText('Remove folder').setWarning().onClick(async () => { this.plugin.settings.watchedFolders.splice(index, 1); await this.plugin.saveSettings(); this.display(); }));
+		});
+		new Setting(containerEl).addButton((button) => button.setButtonText('Add watched folder').onClick(async () => { this.plugin.settings.watchedFolders.push({ binaryFilePath: '', attachmentsFilePath: '/', folder: '/', filenameFormat: this.plugin.settings.filenameFormat, templatePath: '', useTemplater: false }); await this.plugin.saveSettings(); this.display(); }));
+
+		containerEl.createEl('h3', { text: 'Watched extensions' });
 		let extensionToBeAdded: string;
 		new Setting(containerEl)
 			.setName('Extension to be watched')
@@ -221,7 +244,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Forget all binary files')
 			.setDesc(
-				'Binary File Manager remembers binary files for which it has created metadata. If it forgets, then it recognizes all binary files as newly created files and tries to create their metadata again.'
+				'Binary File Manager remembers binary files for which it has created notes. If it forgets, then it recognizes all binary files as newly created files and tries to create their notes again.'
 			)
 			.addButton((component) => {
 				component
@@ -231,6 +254,13 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 						new ForgetAllModal(this.app, this.plugin).open();
 					});
 			});
+	}
+
+	private addFolderSetting(container: HTMLElement, watched: any, name: string, key: string): void {
+		new Setting(container).setName(name).addSearch((input) => {
+			new FolderSuggest(this.app, input.inputEl);
+			input.setValue(watched[key]).onChange(async (value) => { watched[key] = value; await this.plugin.saveSettings(); });
+		});
 	}
 
 	displaySampleFileNameDesc(

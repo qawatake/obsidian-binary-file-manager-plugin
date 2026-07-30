@@ -15,6 +15,16 @@ interface BinaryFileManagerSettings {
 	templatePath: string;
 	useTemplater: boolean;
 	contextMenuTemplatePath: string; // NEW: separate template for context menu
+	watchedFolders: WatchedFolderSettings[];
+}
+
+export interface WatchedFolderSettings {
+	binaryFilePath: string;
+	attachmentsFilePath: string;
+	folder: string;
+	filenameFormat: string;
+	templatePath: string;
+	useTemplater: boolean;
 }
 
 const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
@@ -44,7 +54,8 @@ const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 	filenameFormat: 'INFO_{{NAME}}_{{EXTENSION:UP}}',
 	templatePath: '',
 	useTemplater: false,
-	contextMenuTemplatePath: ''
+	contextMenuTemplatePath: '',
+	watchedFolders: []
 };
 
 export default class BinaryFileManagerPlugin extends Plugin {
@@ -76,7 +87,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 				}
 
 				await this.metaDataGenerator.create(file as TFile);
-				new Notice(`Metadata file of ${file.name} is created.`);
+				new Notice(`Note for ${file.name} is created.`);
 				this.fileListAdapter.add(file.path);
 				await this.fileListAdapter.save();
 			})
@@ -95,7 +106,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		// Commands
 		this.addCommand({
 			id: 'binary-file-manager-manual-detection',
-			name: 'Create metadata for binary files',
+			name: 'Create notes for binary files',
 			callback: async () => {
 				const promises: Promise<void>[] = [];
 				const allFiles = this.app.vault.getFiles();
@@ -113,7 +124,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 							.create(file as TFile)
 							.then(() => {
 								new Notice(
-									`Metadata file of ${file.name} is created.`
+									`Note for ${file.name} is created.`
 								);
 								this.fileListAdapter.add(file.path);
 							})
@@ -126,7 +137,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'binary-file-manager-detect-unlinked-binary-files',
-			name: 'Create metadata for unlinked binary files',
+			name: 'Create notes for unlinked binary files',
 			callback: async () => {
 				const promises: Promise<void>[] = [];
 				const unlinkedFiles =
@@ -137,7 +148,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 							.create(file as TFile)
 							.then(() => {
 								new Notice(
-									`Metadata file of ${file.name} is created.`
+									`Note for ${file.name} is created.`
 								);
 								this.fileListAdapter.add(file.path);
 							})
@@ -185,6 +196,16 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			DEFAULT_SETTINGS,
 			await this.loadData()
 		);
+		if (!this.settings.watchedFolders?.length) {
+			this.settings.watchedFolders = [{
+				binaryFilePath: this.settings.binaryFilePath,
+				attachmentsFilePath: this.settings.attachmentsFilePath,
+				folder: this.settings.folder,
+				filenameFormat: this.settings.filenameFormat,
+				templatePath: this.settings.templatePath,
+				useTemplater: this.settings.useTemplater,
+			}];
+		}
 	}
 
 	async saveSettings() {
