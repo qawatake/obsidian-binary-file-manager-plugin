@@ -9,7 +9,11 @@ By using metadata files, you can take advantage of the rich functionality provie
 - tags and aliases,
 - internal links, and so on.
 
-For example, if you add tags to the metadata of an image file, then you can indirectly access the image file by tag-searching (and following an internal link in the metadata).
+### Use cases
+
+For a case where there are incoming files into Obsidian, like .pdf files coming a paper scanner, this plugin handles creating a new note for that scan.
+
+For another example, if you add tags to the metadata of an image file, then you can indirectly access the image file by tag-searching (and following an internal link in the metadata).
 
 [![Image from Gyazo](https://i.gyazo.com/6c46d863e4c31d0815bcf027fdb48f92.gif)](https://gyazo.com/6c46d863e4c31d0815bcf027fdb48f92)
 
