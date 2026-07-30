@@ -5,7 +5,7 @@
 
 # variables
 SOURCE_DIR="/Users/willjasen/GitHub/obsidian-binary-file-manager-plugin";
-PLUGIN_DIR="/Users/willjasen/Library/Mobile Documents/iCloud~md~obsidian/Documents/willjasen/.obsidian/plugins/obsidian-binary-file-manager-plugin";
+PLUGIN_DIR="/Users/willjasen/Library/Mobile Documents/iCloud~md~obsidian/Documents/testing/.obsidian/plugins/obsidian-binary-file-manager-plugin";
 FILES=( "main.js" "manifest.json" "styles.css" );
 
 

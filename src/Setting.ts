@@ -258,8 +258,8 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			button.setButtonText('Add watched folder').onClick(async () => {
 				this.plugin.settings.watchedFolders.push({
 					binaryFilePath: '',
-					attachmentsFilePath: '/',
-					folder: '/',
+					attachmentsFilePath: '_attachments',
+					folder: '',
 					filenameFormat: this.plugin.settings.filenameFormat,
 					templatePath: '',
 					useTemplater: false,
