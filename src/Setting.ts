@@ -176,27 +176,6 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			.useTemplater
 			? 'block'
 			: 'none';
-		// NEW: Context menu template path
-		const contextMenuTemplateSetting = new Setting(containerEl)
-			.setName('Template file location (context menu)')
-			.setDesc(
-				'Template to use when creating metadata from the right-click menu. Leave blank to use the default.'
-			)
-			.addSearch((component) => {
-				new FileSuggest(this.app, component.inputEl);
-				component
-					.setPlaceholder('Example: folder1/context-menu-template')
-					.setValue(this.plugin.settings.contextMenuTemplatePath)
-					.onChange((newTemplateFile) => {
-						this.plugin.settings.contextMenuTemplatePath =
-							newTemplateFile;
-						this.plugin.saveSettings();
-					});
-			});
-		contextMenuTemplateSetting.settingEl.style.display = this.plugin
-			.settings.useTemplater
-			? 'block'
-			: 'none';
 
 		this.plugin.settings.watchedFolders
 			.slice(1)
@@ -290,13 +269,29 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			})
 		);
 
+		containerEl.createEl('h3', { text: 'Context menu' });
 		const contextMenuSection = containerEl.createEl('details', {
 			cls: 'binary-file-manager-context-menu',
 		});
 		contextMenuSection.createEl('summary', {
 			text: 'Right-click conversion',
 		});
-		contextMenuSection.appendChild(contextMenuTemplateSetting.settingEl);
+		new Setting(contextMenuSection)
+			.setName('Template file location')
+			.setDesc(
+				'Template to use when creating a note from the right-click menu. Leave blank to use the default.'
+			)
+			.addSearch((component) => {
+				new FileSuggest(this.app, component.inputEl);
+				component
+					.setPlaceholder('Example: folder1/context-menu-template')
+					.setValue(this.plugin.settings.contextMenuTemplatePath)
+					.onChange((newTemplateFile) => {
+						this.plugin.settings.contextMenuTemplatePath =
+							newTemplateFile;
+						this.plugin.saveSettings();
+					});
+			});
 
 		containerEl.createEl('h3', { text: 'Watched extensions' });
 		let extensionToBeAdded: string;
