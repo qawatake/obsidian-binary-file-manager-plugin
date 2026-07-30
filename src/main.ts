@@ -55,7 +55,7 @@ const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 	templatePath: '',
 	useTemplater: false,
 	contextMenuTemplatePath: '',
-	watchedFolders: []
+	watchedFolders: [],
 };
 
 export default class BinaryFileManagerPlugin extends Plugin {
@@ -123,9 +123,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 						this.metaDataGenerator
 							.create(file as TFile)
 							.then(() => {
-								new Notice(
-									`Note for ${file.name} is created.`
-								);
+								new Notice(`Note for ${file.name} is created.`);
 								this.fileListAdapter.add(file.path);
 							})
 					);
@@ -147,9 +145,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 						this.metaDataGenerator
 							.create(file as TFile)
 							.then(() => {
-								new Notice(
-									`Note for ${file.name} is created.`
-								);
+								new Notice(`Note for ${file.name} is created.`);
 								this.fileListAdapter.add(file.path);
 							})
 					);
@@ -163,29 +159,34 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		this.addSettingTab(new BinaryFileManagerSettingTab(this.app, this));
 
 		// Add context menu option for binary files
-			this.registerEvent(
-				this.app.workspace.on('file-menu', (menu, file) => {
-					if (!(file instanceof TFile)) return;
-					const ext = this.fileExtensionManager.getExtensionMatchedBest(file.name);
-					if (!ext) return;
+		this.registerEvent(
+			this.app.workspace.on('file-menu', (menu, file) => {
+				if (!(file instanceof TFile)) return;
+				const ext = this.fileExtensionManager.getExtensionMatchedBest(
+					file.name
+				);
+				if (!ext) return;
 
-					menu.addItem((item) => {
-						item.setTitle('Create note from binary file')
-							.setIcon('arrow-right')
-							.onClick(async () => {
-								// Use the file's current directory as the base
-								const fileDir = file.parent?.path || '';
-								// Pass contextMenuTemplatePath as override
-								await this.metaDataGenerator.create(
-									file,
-									fileDir,
-									this.settings.contextMenuTemplatePath || undefined
-								);
-								new Notice(`Created note from "${file.name}" in "${fileDir}".`);
-							});
-					});
-				})
-			);
+				menu.addItem((item) => {
+					item.setTitle('Create note from binary file')
+						.setIcon('arrow-right')
+						.onClick(async () => {
+							// Use the file's current directory as the base
+							const fileDir = file.parent?.path || '';
+							// Pass contextMenuTemplatePath as override
+							await this.metaDataGenerator.create(
+								file,
+								fileDir,
+								this.settings.contextMenuTemplatePath ||
+									undefined
+							);
+							new Notice(
+								`Created note from "${file.name}" in "${fileDir}".`
+							);
+						});
+				});
+			})
+		);
 	}
 
 	// onunload() {}
@@ -197,14 +198,16 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			await this.loadData()
 		);
 		if (!this.settings.watchedFolders?.length) {
-			this.settings.watchedFolders = [{
-				binaryFilePath: this.settings.binaryFilePath,
-				attachmentsFilePath: this.settings.attachmentsFilePath,
-				folder: this.settings.folder,
-				filenameFormat: this.settings.filenameFormat,
-				templatePath: this.settings.templatePath,
-				useTemplater: this.settings.useTemplater,
-			}];
+			this.settings.watchedFolders = [
+				{
+					binaryFilePath: this.settings.binaryFilePath,
+					attachmentsFilePath: this.settings.attachmentsFilePath,
+					folder: this.settings.folder,
+					filenameFormat: this.settings.filenameFormat,
+					templatePath: this.settings.templatePath,
+					useTemplater: this.settings.useTemplater,
+				},
+			];
 		}
 	}
 

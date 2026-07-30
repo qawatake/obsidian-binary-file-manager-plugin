@@ -6,7 +6,9 @@ export class FileExtensionManager {
 
 	constructor(plugin: BinaryFileManagerPlugin) {
 		this.plugin = plugin;
-		this.extensions = new Set<string>(this.plugin.settings.extensions);
+		this.extensions = new Set<string>(
+			this.plugin.settings.extensions.map((ext) => ext.toLowerCase())
+		);
 	}
 
 	public getExtensionMatchedBest(filename: string): string | undefined {
@@ -19,7 +21,7 @@ export class FileExtensionManager {
 			if (ext === '') {
 				return undefined;
 			}
-			if (this.extensions.has(ext)) {
+			if (this.extensions.has(ext.toLowerCase())) {
 				return ext;
 			}
 		}
@@ -27,21 +29,22 @@ export class FileExtensionManager {
 	}
 
 	public add(ext: string): void {
-		this.extensions.add(ext);
+		this.extensions.add(ext.trim().replace(/^\./, '').toLowerCase());
 	}
 
 	public delete(ext: string): void {
-		this.extensions.delete(ext);
+		this.extensions.delete(ext.toLowerCase());
 	}
 
 	public has(ext: string): boolean {
-		return this.extensions.has(ext);
+		return this.extensions.has(ext.toLowerCase());
 	}
 
 	public verify(filepath: string): boolean {
 		// i want to use return so avoid to use forEach
+		const lowerPath = filepath.toLowerCase();
 		for (const ext of this.extensions) {
-			if (filepath.endsWith('.' + ext)) {
+			if (lowerPath.endsWith('.' + ext)) {
 				return true;
 			}
 		}

@@ -1,4 +1,4 @@
-import BinaryFileManagerPlugin from 'main';
+import BinaryFileManagerPlugin, { WatchedFolderSettings } from 'main';
 import {
 	PluginSettingTab,
 	Setting,
@@ -39,9 +39,20 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
+		containerEl.createEl('h3', { text: 'Watched folders' });
+		const defaultFolderSection = containerEl.createEl('details', {
+			cls: 'binary-file-manager-watched-folder',
+		});
+		defaultFolderSection.createEl('summary', {
+			text:
+				this.plugin.settings.binaryFilePath || 'Default watched folder',
+		});
+
+		new Setting(defaultFolderSection)
 			.setName('Watched folder')
-			.setDesc('Only this folder will be watched for new files (subfolders will not be watched)')
+			.setDesc(
+				'Only this folder will be watched for new files (subfolders will not be watched)'
+			)
 			.addSearch((component) => {
 				new FolderSuggest(this.app, component.inputEl);
 				component
@@ -53,7 +64,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
+		new Setting(defaultFolderSection)
 			.setName('Attachments folder')
 			.setDesc('Binary files will be moved here after note creation')
 			.addSearch((component) => {
@@ -67,7 +78,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
+		new Setting(defaultFolderSection)
 			.setName('Note location')
 			.setDesc('New note will be placed here')
 			.addSearch((component) => {
@@ -81,64 +92,73 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl).setName('File name format').then((setting) => {
-			setting.addText((component) => {
-				component
-					.setValue(this.plugin.settings.filenameFormat)
-					.onChange((input) => {
-						const newFormat = input.trim().replace(/\.md$/, '');
-						if (newFormat === '') {
-							new Notice('File name format must not be blanck');
-							return;
-						}
+		new Setting(defaultFolderSection)
+			.setName('File name format')
+			.then((setting) => {
+				setting.addText((component) => {
+					component
+						.setValue(this.plugin.settings.filenameFormat)
+						.onChange((input) => {
+							const newFormat = input.trim().replace(/\.md$/, '');
+							if (newFormat === '') {
+								new Notice(
+									'File name format must not be blanck'
+								);
+								return;
+							}
 
-						const sampleFileName = this.plugin.formatter.format(
-							newFormat,
-							'folder/sample.png',
-							moment.now()
-						);
+							const sampleFileName = this.plugin.formatter.format(
+								newFormat,
+								'folder/sample.png',
+								moment.now()
+							);
 
-						this.displaySampleFileNameDesc(
-							setting.descEl,
-							sampleFileName
-						);
+							this.displaySampleFileNameDesc(
+								setting.descEl,
+								sampleFileName
+							);
 
-						// check if file name contains valid letters like "/" or ":"
-						const { valid } = validFileName(sampleFileName);
-						if (!valid) {
-							return;
-						}
+							// check if file name contains valid letters like "/" or ":"
+							const { valid } = validFileName(sampleFileName);
+							if (!valid) {
+								return;
+							}
 
-						this.plugin.settings.filenameFormat = newFormat;
-						this.plugin.saveSettings();
-					});
+							this.plugin.settings.filenameFormat = newFormat;
+							this.plugin.saveSettings();
+						});
 
-				const sampleFileName = this.plugin.formatter.format(
-					this.plugin.settings.filenameFormat,
-					'folder/sample.png',
-					moment.now()
-				);
-				this.displaySampleFileNameDesc(setting.descEl, sampleFileName);
+					const sampleFileName = this.plugin.formatter.format(
+						this.plugin.settings.filenameFormat,
+						'folder/sample.png',
+						moment.now()
+					);
+					this.displaySampleFileNameDesc(
+						setting.descEl,
+						sampleFileName
+					);
+				});
 			});
-		});
 
 		// Create the "Use Templater" toggle setting
-		new Setting(containerEl)
-		.setName('Use Templater')
-		.addToggle(async (component) => {
-			component
-				.setValue(this.plugin.settings.useTemplater)
-				.onChange((value) => {
-					this.plugin.settings.useTemplater = value;
-					this.plugin.saveSettings();
-					
-					// Show or hide the Template file location setting based on the toggle value
-					templateSetting.settingEl.style.display = value ? 'block' : 'none';
-				});
-		});
+		new Setting(defaultFolderSection)
+			.setName('Use Templater')
+			.addToggle(async (component) => {
+				component
+					.setValue(this.plugin.settings.useTemplater)
+					.onChange((value) => {
+						this.plugin.settings.useTemplater = value;
+						this.plugin.saveSettings();
+
+						// Show or hide the Template file location setting based on the toggle value
+						templateSetting.settingEl.style.display = value
+							? 'block'
+							: 'none';
+					});
+			});
 
 		// Create the "Template file location" search setting and initially hide or show it
-		const templateSetting = new Setting(containerEl)
+		const templateSetting = new Setting(defaultFolderSection)
 			.setName('Template file location (watched folder)')
 			.addSearch((component) => {
 				new FileSuggest(this.app, component.inputEl);
@@ -152,46 +172,131 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			});
 
 		// Set the initial visibility of the "Template file location" setting
-		templateSetting.settingEl.style.display = this.plugin.settings.useTemplater ? 'block' : 'none';
-
+		templateSetting.settingEl.style.display = this.plugin.settings
+			.useTemplater
+			? 'block'
+			: 'none';
 		// NEW: Context menu template path
 		const contextMenuTemplateSetting = new Setting(containerEl)
 			.setName('Template file location (context menu)')
-			.setDesc('Template to use when creating metadata from the right-click menu. Leave blank to use the default.')
+			.setDesc(
+				'Template to use when creating metadata from the right-click menu. Leave blank to use the default.'
+			)
 			.addSearch((component) => {
 				new FileSuggest(this.app, component.inputEl);
 				component
 					.setPlaceholder('Example: folder1/context-menu-template')
 					.setValue(this.plugin.settings.contextMenuTemplatePath)
 					.onChange((newTemplateFile) => {
-						this.plugin.settings.contextMenuTemplatePath = newTemplateFile;
+						this.plugin.settings.contextMenuTemplatePath =
+							newTemplateFile;
 						this.plugin.saveSettings();
 					});
 			});
-		contextMenuTemplateSetting.settingEl.style.display = this.plugin.settings.useTemplater ? 'block' : 'none';
-		containerEl.createEl('h3', { text: 'Watched folders' });
+		contextMenuTemplateSetting.settingEl.style.display = this.plugin
+			.settings.useTemplater
+			? 'block'
+			: 'none';
 
-		// Keep the default folder's settings compact as well, matching additional folders.
-		const defaultFolderSection = containerEl.createEl('details', { cls: 'binary-file-manager-watched-folder' });
-		defaultFolderSection.createEl('summary', { text: this.plugin.settings.binaryFilePath || 'Default watched folder' });
-		const defaultFolderSettings = Array.from(containerEl.children).slice(1, 8);
-		defaultFolderSettings.forEach((setting) => defaultFolderSection.appendChild(setting));
-		containerEl.insertBefore(defaultFolderSection, containerEl.children[2]);
+		this.plugin.settings.watchedFolders
+			.slice(1)
+			.forEach((watched, offset) => {
+				const index = offset + 1;
+				const section = containerEl.createEl('details', {
+					cls: 'binary-file-manager-watched-folder',
+				});
+				section.createEl('summary', {
+					text:
+						watched.binaryFilePath || `Watched folder ${index + 1}`,
+				});
+				section.createEl('h4', { text: `Watched folder ${index + 1}` });
+				this.addFolderSetting(
+					section,
+					watched,
+					'Watched folder',
+					'binaryFilePath'
+				);
+				this.addFolderSetting(
+					section,
+					watched,
+					'Attachments folder',
+					'attachmentsFilePath'
+				);
+				this.addFolderSetting(
+					section,
+					watched,
+					'Note location',
+					'folder'
+				);
+				new Setting(section)
+					.setName('File name format')
+					.addText((input) =>
+						input
+							.setValue(watched.filenameFormat)
+							.onChange(async (value) => {
+								watched.filenameFormat = value
+									.trim()
+									.replace(/\.md$/, '');
+								await this.plugin.saveSettings();
+							})
+					);
+				new Setting(section)
+					.setName('Use Templater')
+					.addToggle((toggle) =>
+						toggle
+							.setValue(watched.useTemplater)
+							.onChange(async (value) => {
+								watched.useTemplater = value;
+								await this.plugin.saveSettings();
+							})
+					);
+				new Setting(section)
+					.setName('Template file location')
+					.addSearch((input) => {
+						new FileSuggest(this.app, input.inputEl);
+						input
+							.setValue(watched.templatePath)
+							.onChange(async (value) => {
+								watched.templatePath = value;
+								await this.plugin.saveSettings();
+							});
+					});
+				new Setting(section).addButton((button) =>
+					button
+						.setButtonText('Remove folder')
+						.setWarning()
+						.onClick(async () => {
+							this.plugin.settings.watchedFolders.splice(
+								index,
+								1
+							);
+							await this.plugin.saveSettings();
+							this.display();
+						})
+				);
+			});
+		new Setting(containerEl).addButton((button) =>
+			button.setButtonText('Add watched folder').onClick(async () => {
+				this.plugin.settings.watchedFolders.push({
+					binaryFilePath: '',
+					attachmentsFilePath: '/',
+					folder: '/',
+					filenameFormat: this.plugin.settings.filenameFormat,
+					templatePath: '',
+					useTemplater: false,
+				});
+				await this.plugin.saveSettings();
+				this.display();
+			})
+		);
 
-		this.plugin.settings.watchedFolders.slice(1).forEach((watched, offset) => {
-			const index = offset + 1;
-			const section = containerEl.createEl('details', { cls: 'binary-file-manager-watched-folder' });
-			section.createEl('summary', { text: watched.binaryFilePath || `Watched folder ${index + 1}` });
-			section.createEl('h4', { text: `Watched folder ${index + 1}` });
-			this.addFolderSetting(section, watched, 'Watched folder', 'binaryFilePath');
-			this.addFolderSetting(section, watched, 'Attachments folder', 'attachmentsFilePath');
-			this.addFolderSetting(section, watched, 'Note location', 'folder');
-			new Setting(section).setName('File name format').addText((input) => input.setValue(watched.filenameFormat).onChange(async (value) => { watched.filenameFormat = value.trim().replace(/\.md$/, ''); await this.plugin.saveSettings(); }));
-			new Setting(section).setName('Use Templater').addToggle((toggle) => toggle.setValue(watched.useTemplater).onChange(async (value) => { watched.useTemplater = value; await this.plugin.saveSettings(); }));
-			new Setting(section).setName('Template file location').addSearch((input) => { new FileSuggest(this.app, input.inputEl); input.setValue(watched.templatePath).onChange(async (value) => { watched.templatePath = value; await this.plugin.saveSettings(); }); });
-			new Setting(section).addButton((button) => button.setButtonText('Remove folder').setWarning().onClick(async () => { this.plugin.settings.watchedFolders.splice(index, 1); await this.plugin.saveSettings(); this.display(); }));
+		const contextMenuSection = containerEl.createEl('details', {
+			cls: 'binary-file-manager-context-menu',
 		});
-		new Setting(containerEl).addButton((button) => button.setButtonText('Add watched folder').onClick(async () => { this.plugin.settings.watchedFolders.push({ binaryFilePath: '', attachmentsFilePath: '/', folder: '/', filenameFormat: this.plugin.settings.filenameFormat, templatePath: '', useTemplater: false }); await this.plugin.saveSettings(); this.display(); }));
+		contextMenuSection.createEl('summary', {
+			text: 'Right-click conversion',
+		});
+		contextMenuSection.appendChild(contextMenuTemplateSetting.settingEl);
 
 		containerEl.createEl('h3', { text: 'Watched extensions' });
 		let extensionToBeAdded: string;
@@ -223,11 +328,14 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 				});
 			});
 
-
 		// Render extensions as inline chips
-		const extContainer = containerEl.createDiv('binary-file-manager-extensions-container');
+		const extContainer = containerEl.createDiv(
+			'binary-file-manager-extensions-container'
+		);
 		this.plugin.settings.extensions.forEach((ext) => {
-			const chip = extContainer.createDiv('binary-file-manager-extension-chip');
+			const chip = extContainer.createDiv(
+				'binary-file-manager-extension-chip'
+			);
 			chip.setText(ext);
 			const removeBtn = chip.createEl('button', { text: '✕' });
 			removeBtn.addClass('remove-btn');
@@ -235,7 +343,8 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			removeBtn.onclick = async (e) => {
 				e.preventDefault();
 				this.plugin.fileExtensionManager.delete(ext);
-				this.plugin.settings.extensions = this.plugin.fileExtensionManager.toArray();
+				this.plugin.settings.extensions =
+					this.plugin.fileExtensionManager.toArray();
 				await this.plugin.saveSettings();
 				this.display();
 			};
@@ -256,10 +365,18 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			});
 	}
 
-	private addFolderSetting(container: HTMLElement, watched: any, name: string, key: string): void {
+	private addFolderSetting(
+		container: HTMLElement,
+		watched: WatchedFolderSettings,
+		name: string,
+		key: 'binaryFilePath' | 'attachmentsFilePath' | 'folder'
+	): void {
 		new Setting(container).setName(name).addSearch((input) => {
 			new FolderSuggest(this.app, input.inputEl);
-			input.setValue(watched[key]).onChange(async (value) => { watched[key] = value; await this.plugin.saveSettings(); });
+			input.setValue(String(watched[key])).onChange(async (value) => {
+				watched[key] = value;
+				await this.plugin.saveSettings();
+			});
 		});
 	}
 
