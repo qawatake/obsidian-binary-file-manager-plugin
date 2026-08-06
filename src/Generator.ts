@@ -91,16 +91,27 @@ export class MetaDataGenerator {
 		const folder = baseDir || settings.folder;
 		const attachmentsFolder =
 			settings.attachmentsFilePath || `${folder}/_attachments`;
-		const metaDataFileName = this.uniquefyMetaDataFileName(
-			this.generateMetaDataFileName(file),
-			folder
+		const metaDataFileName = this.generateMetaDataFileName(file);
+		const templateContent = await this.fetchTemplateContent(
+			templatePathOverride,
+			settings.templatePath
 		);
-		const metaDataFilePath = `${folder}/${metaDataFileName}`;
+		const attachment = await this.moveBinaryFile(file, attachmentsFolder);
+		const { fileName: uniqueMetaDataFileName, isDuplicate } =
+			this.uniquefyMetaDataFileName(
+				metaDataFileName,
+				folder,
+				attachment.isDuplicate
+			);
+		const metaDataFilePath = `${folder}/${uniqueMetaDataFileName}`;
 		await this.createMetaDataFile(
 			metaDataFilePath,
 			file as TFile,
-			attachmentsFolder,
-			templatePathOverride
+			attachment.path,
+			templateContent,
+			settings.useTemplater,
+			isDuplicate,
+			attachment.hash
 		);
 	}
 
@@ -118,44 +129,90 @@ export class MetaDataGenerator {
 
 	private uniquefyMetaDataFileName(
 		metaDataFileName: string,
-		folder: string
-	): string {
+		folder: string,
+		isDuplicate: boolean
+	): { fileName: string; isDuplicate: boolean } {
 		const metaDataFilePath = normalizePath(`${folder}/${metaDataFileName}`);
 		if (this.app.vault.getAbstractFileByPath(metaDataFilePath)) {
-			return `CONFLICT-${moment().format(
-				'YYYY-MM-DD-hh-mm-ss'
-			)}-${metaDataFileName}`;
-		} else {
-			return metaDataFileName;
+			const prefix = isDuplicate ? 'DUPLICATE' : 'CONFLICT';
+			return {
+				fileName: `${prefix}-${moment().format(
+					'YYYY-MM-DD-hh-mm-ss'
+				)}-${metaDataFileName}`,
+				isDuplicate,
+			};
 		}
+		return { fileName: metaDataFileName, isDuplicate };
 	}
 
-	private uniquefyBinaryFileName(
+	private async uniquefyBinaryFileName(
 		binaryFileName: string,
-		attachmentsFolder: string
-	): string {
+		attachmentsFolder: string,
+		binaryFile: TFile
+	): Promise<{
+		fileName: string;
+		existingPath?: string;
+		hash?: string | undefined;
+	}> {
 		const attachmentFullFilePath = attachmentsFolder + '/' + binaryFileName;
-		if (this.app.vault.getAbstractFileByPath(attachmentFullFilePath)) {
-			return `CONFLICT-${moment().format(
-				'YYYY-MM-DD-hh-mm-ss'
-			)}-${binaryFileName}`;
-		} else {
-			return binaryFileName;
+		const existingFile = this.app.vault.getAbstractFileByPath(
+			attachmentFullFilePath
+		);
+		if (existingFile instanceof TFile) {
+			const [existingHash, incomingHash] = await Promise.all([
+				this.sha256(await this.app.vault.readBinary(existingFile)),
+				this.sha256(await this.app.vault.readBinary(binaryFile)),
+			]);
+			if (existingHash === incomingHash) {
+				return {
+					fileName: binaryFileName,
+					existingPath: existingFile.path,
+					hash: existingHash,
+				};
+			}
+			return {
+				fileName: `CONFLICT-${moment().format(
+					'YYYY-MM-DD-hh-mm-ss'
+				)}-${binaryFileName}`,
+			};
 		}
+		return { fileName: binaryFileName };
 	}
 
 	private async moveBinaryFile(
 		binaryFile: TFile,
 		attachmentsFolder: string
-	): Promise<string> {
-		const binaryFileName = this.uniquefyBinaryFileName(
-			binaryFile.basename + '.' + binaryFile.extension,
-			attachmentsFolder
-		);
-		const fullFilePath = attachmentsFolder + '/' + binaryFileName;
-		if (normalizePath(binaryFile.path) === normalizePath(fullFilePath)) {
-			return binaryFile.path;
+	): Promise<{
+		path: string;
+		isDuplicate: boolean;
+		hash?: string | undefined;
+	}> {
+		const originalFileName =
+			binaryFile.basename + '.' + binaryFile.extension;
+		const originalFullFilePath = attachmentsFolder + '/' + originalFileName;
+		if (
+			normalizePath(binaryFile.path) ===
+			normalizePath(originalFullFilePath)
+		) {
+			return { path: binaryFile.path, isDuplicate: false };
 		}
+		const {
+			fileName: binaryFileName,
+			existingPath,
+			hash,
+		} = await this.uniquefyBinaryFileName(
+			originalFileName,
+			attachmentsFolder,
+			binaryFile
+		);
+		if (existingPath) {
+			await this.app.vault.delete(binaryFile);
+			new Notice(
+				`Duplicate binary file detected. Using existing attachment ${binaryFileName}.`
+			);
+			return { path: existingPath, isDuplicate: true, hash };
+		}
+		const fullFilePath = attachmentsFolder + '/' + binaryFileName;
 		// Ensure attachments folder exists
 		const folder = this.app.vault.getAbstractFileByPath(attachmentsFolder);
 		if (!folder) {
@@ -165,43 +222,39 @@ export class MetaDataGenerator {
 		try {
 			await this.app.fileManager.renameFile(binaryFile, fullFilePath);
 			new Notice(`Binary file of ${binaryFileName} has been moved.`);
-			return fullFilePath;
+			return { path: fullFilePath, isDuplicate: false };
 		} catch (err) {
 			new Notice(
 				`Problem moving the binary file of ${binaryFileName} into the attachments folder.`
 			);
 			alert(err);
-			return binaryFile.path;
+			return { path: binaryFile.path, isDuplicate: false };
 		}
 	}
 
 	private async createMetaDataFile(
 		metaDataFilePath: string,
 		binaryFile: TFile,
-		attachmentsFolder: string,
-		templatePathOverride?: string
+		fullFilePath: string,
+		templateContent: string,
+		useTemplater: boolean,
+		isDuplicate = false,
+		duplicateHash?: string
 	): Promise<void> {
-		const settings =
-			this.getWatchedFolderSettings(binaryFile.parent?.path || '') ||
-			this.plugin.settings;
-		const templateContent = await this.fetchTemplateContent(
-			templatePathOverride,
-			settings.templatePath
-		);
-		// Move the binary file to the attachments folder
-		const fullFilePath = await this.moveBinaryFile(
-			binaryFile,
-			attachmentsFolder
-		);
 		// process by Templater
 		const templaterPlugin = await this.getTemplaterPlugin();
-		if (!(settings.useTemplater && templaterPlugin)) {
+		if (!(useTemplater && templaterPlugin)) {
+			const content = this.plugin.formatter.format(
+				templateContent,
+				fullFilePath,
+				binaryFile.stat.ctime
+			);
 			await this.app.vault.create(
 				metaDataFilePath,
-				this.plugin.formatter.format(
-					templateContent,
-					fullFilePath,
-					binaryFile.stat.ctime
+				this.addDuplicateNotice(
+					this.addAttachmentEmbed(content, fullFilePath),
+					isDuplicate,
+					duplicateHash
 				)
 			);
 		} else {
@@ -220,7 +273,10 @@ export class MetaDataGenerator {
 						binaryFile.stat.ctime
 					)
 				);
-				await this.app.vault.modify(targetFile, content);
+				await this.app.vault.modify(
+					targetFile,
+					this.addDuplicateNotice(content, isDuplicate, duplicateHash)
+				);
 			} catch (err) {
 				new Notice(
 					'ERROR in Binary File Manager Plugin: failed to connect to Templater. Your Templater version may not be supported.'
@@ -228,6 +284,41 @@ export class MetaDataGenerator {
 				console.log(err);
 			}
 		}
+	}
+
+	private addDuplicateNotice(
+		content: string,
+		isDuplicate: boolean,
+		duplicateHash?: string
+	): string {
+		if (!isDuplicate) {
+			return content;
+		}
+		return `${content}\n\n> [!info] Duplicate\n> This metadata note was created from a duplicate file.\n> SHA-256: \`${
+			duplicateHash ?? 'unavailable'
+		}\`\n\n`;
+	}
+
+	private addAttachmentEmbed(
+		content: string,
+		attachmentPath: string
+	): string {
+		const attachmentLink = `[[${attachmentPath}]]`;
+		if (content.includes(attachmentLink)) {
+			return content;
+		}
+		return `${content}\n\n!${attachmentLink}`;
+	}
+
+	private async sha256(content: string | ArrayBuffer): Promise<string> {
+		const data =
+			typeof content === 'string'
+				? new TextEncoder().encode(content)
+				: new Uint8Array(content);
+		const hash = await crypto.subtle.digest('SHA-256', data);
+		return Array.from(new Uint8Array(hash), (byte) =>
+			byte.toString(16).padStart(2, '0')
+		).join('');
 	}
 
 	private async fetchTemplateContent(
