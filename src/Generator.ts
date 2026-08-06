@@ -207,6 +207,7 @@ export class MetaDataGenerator {
 		);
 		if (existingPath) {
 			await this.app.vault.delete(binaryFile);
+			await this.addDuplicateNoticeToReferencingNotes(existingPath, hash);
 			new Notice(
 				`Duplicate binary file detected. Using existing attachment ${binaryFileName}.`
 			);
@@ -308,6 +309,41 @@ export class MetaDataGenerator {
 			return content;
 		}
 		return `${content}\n\n!${attachmentLink}`;
+	}
+
+	private async addDuplicateNoticeToReferencingNotes(
+		attachmentPath: string,
+		duplicateHash?: string
+	): Promise<void> {
+		const hashMarker = `> SHA-256: \`${duplicateHash ?? 'unavailable'}\``;
+		const referencingNotes = this.app.vault
+			.getMarkdownFiles()
+			.filter((note) => {
+				const cache = this.app.metadataCache.getFileCache(note);
+				const references = [
+					...(cache?.links ?? []),
+					...(cache?.embeds ?? []),
+				];
+				return references.some(
+					(reference) =>
+						this.app.metadataCache.getFirstLinkpathDest(
+							reference.link,
+							note.path
+						)?.path === attachmentPath
+				);
+			});
+
+		await Promise.all(
+			referencingNotes.map(async (note) => {
+				const content = await this.app.vault.read(note);
+				if (!content.includes(hashMarker)) {
+					await this.app.vault.modify(
+						note,
+						this.addDuplicateNotice(content, true, duplicateHash)
+					);
+				}
+			})
+		);
 	}
 
 	private async sha256(content: string | ArrayBuffer): Promise<string> {
