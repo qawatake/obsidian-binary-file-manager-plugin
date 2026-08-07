@@ -154,7 +154,8 @@ export default class BinaryFileManagerPlugin extends Plugin {
 							await this.metaDataGenerator.create(
 								file,
 								fileDir,
-								this.settings.contextMenuTemplatePath || undefined
+								this.settings.contextMenuTemplatePath ||
+									undefined
 							);
 							new Notice(
 								`Created note from "${file.name}" in "${fileDir}".`
