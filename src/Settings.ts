@@ -7,6 +7,8 @@ export interface WatchedFolderSettings {
 	useTemplater: boolean;
 }
 
+export const SETTINGS_VERSION = 2;
+
 export function normalizeWatchedFolders(
 	primaryPath: string,
 	legacyWatchedFolders: WatchedFolderSettings[] | undefined

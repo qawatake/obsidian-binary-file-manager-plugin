@@ -4,9 +4,15 @@ import { BinaryFileManagerSettingTab } from 'Setting';
 import { FileExtensionManager } from 'Extension';
 import { FileListAdapter } from 'FileList';
 import { MetaDataGenerator } from 'Generator';
-import { normalizeWatchedFolders, WatchedFolderSettings } from 'Settings';
+import {
+	normalizeWatchedFolders,
+	SETTINGS_VERSION,
+	WatchedFolderSettings,
+} from 'Settings';
+import { SerialQueue } from 'SerialQueue';
 
 interface BinaryFileManagerSettings {
+	settingsVersion: number;
 	autoDetection: boolean;
 	extensions: string[];
 	folder: string;
@@ -21,6 +27,7 @@ interface BinaryFileManagerSettings {
 export type { WatchedFolderSettings } from 'Settings';
 
 const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
+	settingsVersion: SETTINGS_VERSION,
 	autoDetection: false,
 	extensions: [
 		'png',
@@ -57,6 +64,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 	metaDataGenerator!: MetaDataGenerator;
 	fileExtensionManager!: FileExtensionManager;
 	fileListAdapter!: FileListAdapter;
+	private autoDetectionQueue = new SerialQueue();
 
 	override async onload() {
 		await this.loadSettings();
@@ -67,24 +75,10 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		this.metaDataGenerator = new MetaDataGenerator(this.app, this);
 
 		this.registerEvent(
-			this.app.vault.on('create', async (file: TAbstractFile) => {
-				if (!this.settings.autoDetection) {
-					return;
-				}
-				if (
-					!(await this.metaDataGenerator.shouldCreateMetaDataFile(
-						file
-					))
-				) {
-					return;
-				}
-
-				const attachmentPath = await this.metaDataGenerator.create(
-					file as TFile
+			this.app.vault.on('create', (file: TAbstractFile) => {
+				void this.autoDetectionQueue.enqueue(() =>
+					this.processAutoDetectedFile(file)
 				);
-				new Notice(`Note for ${file.name} is created.`);
-				this.fileListAdapter.add(attachmentPath);
-				await this.fileListAdapter.save();
 			})
 		);
 
@@ -177,18 +171,34 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		}
 	}
 
+	private async processAutoDetectedFile(file: TAbstractFile): Promise<void> {
+		if (!this.settings.autoDetection) {
+			return;
+		}
+		if (!(await this.metaDataGenerator.shouldCreateMetaDataFile(file))) {
+			return;
+		}
+		await this.createAndRegister(file as TFile);
+		await this.fileListAdapter.save();
+	}
+
 	// onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
-		);
+		const savedSettings = await this.loadData();
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, savedSettings);
+		const needsMigration =
+			savedSettings !== null &&
+			(savedSettings as Partial<BinaryFileManagerSettings>)
+				.settingsVersion !== SETTINGS_VERSION;
 		this.settings.watchedFolders = normalizeWatchedFolders(
 			this.settings.binaryFilePath,
 			this.settings.watchedFolders
 		);
+		this.settings.settingsVersion = SETTINGS_VERSION;
+		if (needsMigration) {
+			await this.saveSettings();
+		}
 	}
 
 	async saveSettings() {
