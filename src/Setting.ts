@@ -11,6 +11,7 @@ import {
 import { FolderSuggest } from 'suggesters/FolderSuggester';
 import { FileSuggest } from 'suggesters/FileSuggester';
 import { validFileName } from 'Util';
+import { normalizeFolderPath } from 'Settings';
 
 export class BinaryFileManagerSettingTab extends PluginSettingTab {
 	plugin: BinaryFileManagerPlugin;
@@ -177,83 +178,67 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			? 'block'
 			: 'none';
 
-		this.plugin.settings.watchedFolders
-			.slice(1)
-			.forEach((watched, offset) => {
-				const index = offset + 1;
-				const section = containerEl.createEl('details', {
-					cls: 'binary-file-manager-watched-folder',
-				});
-				section.createEl('summary', {
-					text:
-						watched.binaryFilePath || `Watched folder ${index + 1}`,
-				});
-				section.createEl('h4', { text: `Watched folder ${index + 1}` });
-				this.addFolderSetting(
-					section,
-					watched,
-					'Watched folder',
-					'binaryFilePath'
-				);
-				this.addFolderSetting(
-					section,
-					watched,
-					'Attachments folder',
-					'attachmentsFilePath'
-				);
-				this.addFolderSetting(
-					section,
-					watched,
-					'Note location',
-					'folder'
-				);
-				new Setting(section)
-					.setName('File name format')
-					.addText((input) =>
-						input
-							.setValue(watched.filenameFormat)
-							.onChange(async (value) => {
-								watched.filenameFormat = value
-									.trim()
-									.replace(/\.md$/, '');
-								await this.plugin.saveSettings();
-							})
-					);
-				new Setting(section)
-					.setName('Use Templater')
-					.addToggle((toggle) =>
-						toggle
-							.setValue(watched.useTemplater)
-							.onChange(async (value) => {
-								watched.useTemplater = value;
-								await this.plugin.saveSettings();
-							})
-					);
-				new Setting(section)
-					.setName('Template file location')
-					.addSearch((input) => {
-						new FileSuggest(this.app, input.inputEl);
-						input
-							.setValue(watched.templatePath)
-							.onChange(async (value) => {
-								watched.templatePath = value;
-								await this.plugin.saveSettings();
-							});
-					});
-				new Setting(section).addButton((button) =>
-					button
-						.setButtonText('Remove folder')
-						.setWarning()
-						.onClick(async () => {
-							this.plugin.settings.watchedFolders.splice(
-								index,
-								1
-							);
-							await this.plugin.saveSettings();
-							this.display();
-						})
-				);
+		this.plugin.settings.watchedFolders.forEach((watched, index) => {
+			const section = containerEl.createEl('details', {
+				cls: 'binary-file-manager-watched-folder',
 			});
+			section.createEl('summary', {
+				text: watched.binaryFilePath || `Watched folder ${index + 1}`,
+			});
+			section.createEl('h4', { text: `Watched folder ${index + 1}` });
+			this.addFolderSetting(
+				section,
+				watched,
+				'Watched folder',
+				'binaryFilePath'
+			);
+			this.addFolderSetting(
+				section,
+				watched,
+				'Attachments folder',
+				'attachmentsFilePath'
+			);
+			this.addFolderSetting(section, watched, 'Note location', 'folder');
+			new Setting(section).setName('File name format').addText((input) =>
+				input
+					.setValue(watched.filenameFormat)
+					.onChange(async (value) => {
+						watched.filenameFormat = value
+							.trim()
+							.replace(/\.md$/, '');
+						await this.plugin.saveSettings();
+					})
+			);
+			new Setting(section).setName('Use Templater').addToggle((toggle) =>
+				toggle
+					.setValue(watched.useTemplater)
+					.onChange(async (value) => {
+						watched.useTemplater = value;
+						await this.plugin.saveSettings();
+					})
+			);
+			new Setting(section)
+				.setName('Template file location')
+				.addSearch((input) => {
+					new FileSuggest(this.app, input.inputEl);
+					input
+						.setValue(watched.templatePath)
+						.onChange(async (value) => {
+							watched.templatePath = value;
+							await this.plugin.saveSettings();
+						});
+				});
+			new Setting(section).addButton((button) =>
+				button
+					.setButtonText('Remove folder')
+					.setWarning()
+					.onClick(async () => {
+						this.plugin.settings.watchedFolders.splice(index, 1);
+						await this.plugin.saveSettings();
+						this.display();
+					})
+			);
+		});
 		new Setting(containerEl).addButton((button) =>
 			button.setButtonText('Add watched folder').onClick(async () => {
 				this.plugin.settings.watchedFolders.push({
@@ -369,10 +354,40 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 		new Setting(container).setName(name).addSearch((input) => {
 			new FolderSuggest(this.app, input.inputEl);
 			input.setValue(String(watched[key])).onChange(async (value) => {
-				watched[key] = value;
+				if (
+					key === 'binaryFilePath' &&
+					!this.isValidWatchedFolder(value, watched)
+				) {
+					return;
+				}
+				watched[key] = value.trim();
 				await this.plugin.saveSettings();
 			});
 		});
+	}
+
+	private isValidWatchedFolder(
+		path: string,
+		current: WatchedFolderSettings
+	): boolean {
+		const normalized = normalizeFolderPath(path);
+		if (normalized === '') {
+			new Notice('A watched folder cannot be blank. Remove it instead.');
+			return false;
+		}
+		const isDuplicate = [
+			this.plugin.settings.binaryFilePath,
+			...this.plugin.settings.watchedFolders
+				.filter((watched) => watched !== current)
+				.map((watched) => watched.binaryFilePath),
+		].some(
+			(watchedPath) => normalizeFolderPath(watchedPath) === normalized
+		);
+		if (isDuplicate) {
+			new Notice('That folder is already being watched.');
+			return false;
+		}
+		return true;
 	}
 
 	displaySampleFileNameDesc(
