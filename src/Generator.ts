@@ -11,6 +11,7 @@ import {
 import { UncoveredApp } from 'Uncover';
 import { retry } from 'Util';
 import { collisionFileName } from 'Filename';
+import { replaceDuplicateReferences } from 'DuplicateReferences';
 
 const TEMPLATER_PLUGIN_NAME = 'templater-obsidian';
 const DEFAULT_TEMPLATE_CONTENT = ``;
@@ -128,6 +129,10 @@ export class MetaDataGenerator {
 		}
 
 		if (attachment.duplicateSource) {
+			await this.replaceReferencesToDuplicate(
+				attachment.originalPath,
+				attachment.path
+			);
 			await this.app.vault.delete(attachment.duplicateSource);
 			await this.addDuplicateNoticeToReferencingNotes(
 				attachment.path,
@@ -432,6 +437,44 @@ export class MetaDataGenerator {
 					);
 				}
 			})
+		);
+	}
+
+	private async replaceReferencesToDuplicate(
+		sourcePath: string,
+		targetPath: string
+	): Promise<void> {
+		await replaceDuplicateReferences(
+			{
+				getMarkdownFiles: () => this.app.vault.getMarkdownFiles(),
+				getReferences: (note) => {
+					const cache = this.app.metadataCache.getFileCache(
+						note as TFile
+					);
+					return [...(cache?.links ?? []), ...(cache?.embeds ?? [])];
+				},
+				resolvesTo: (link, notePath) =>
+					this.app.metadataCache.getFirstLinkpathDest(link, notePath)
+						?.path,
+				linktextFor: (path, notePath) => {
+					const target = this.app.vault.getAbstractFileByPath(path);
+					if (!(target instanceof TFile)) {
+						throw new Error(
+							`Duplicate attachment ${path} no longer exists.`
+						);
+					}
+					return this.app.metadataCache.fileToLinktext(
+						target,
+						notePath,
+						false
+					);
+				},
+				read: (note) => this.app.vault.read(note as TFile),
+				modify: (note, content) =>
+					this.app.vault.modify(note as TFile, content),
+			},
+			sourcePath,
+			targetPath
 		);
 	}
 
