@@ -4,6 +4,7 @@ import { BinaryFileManagerSettingTab } from 'Setting';
 import { FileExtensionManager } from 'Extension';
 import { FileListAdapter } from 'FileList';
 import { MetaDataGenerator } from 'Generator';
+import { normalizeWatchedFolders, WatchedFolderSettings } from 'Settings';
 
 interface BinaryFileManagerSettings {
 	autoDetection: boolean;
@@ -17,15 +18,7 @@ interface BinaryFileManagerSettings {
 	contextMenuTemplatePath: string; // NEW: separate template for context menu
 	watchedFolders: WatchedFolderSettings[];
 }
-
-export interface WatchedFolderSettings {
-	binaryFilePath: string;
-	attachmentsFilePath: string;
-	folder: string;
-	filenameFormat: string;
-	templatePath: string;
-	useTemplater: boolean;
-}
+export type { WatchedFolderSettings } from 'Settings';
 
 const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 	autoDetection: false,
@@ -86,9 +79,11 @@ export default class BinaryFileManagerPlugin extends Plugin {
 					return;
 				}
 
-				await this.metaDataGenerator.create(file as TFile);
+				const attachmentPath = await this.metaDataGenerator.create(
+					file as TFile
+				);
 				new Notice(`Note for ${file.name} is created.`);
-				this.fileListAdapter.add(file.path);
+				this.fileListAdapter.add(attachmentPath);
 				await this.fileListAdapter.save();
 			})
 		);
@@ -108,7 +103,6 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			id: 'binary-file-manager-manual-detection',
 			name: 'Create notes for binary files',
 			callback: async () => {
-				const promises: Promise<void>[] = [];
 				const allFiles = this.app.vault.getFiles();
 				for (const file of allFiles) {
 					if (
@@ -119,17 +113,9 @@ export default class BinaryFileManagerPlugin extends Plugin {
 						continue;
 					}
 
-					promises.push(
-						this.metaDataGenerator
-							.create(file as TFile)
-							.then(() => {
-								new Notice(`Note for ${file.name} is created.`);
-								this.fileListAdapter.add(file.path);
-							})
-					);
+					await this.createAndRegister(file);
 				}
-				await Promise.all(promises);
-				this.fileListAdapter.save();
+				await this.fileListAdapter.save();
 			},
 		});
 
@@ -137,21 +123,12 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			id: 'binary-file-manager-detect-unlinked-binary-files',
 			name: 'Create notes for unlinked binary files',
 			callback: async () => {
-				const promises: Promise<void>[] = [];
 				const unlinkedFiles =
 					this.metaDataGenerator.findUnlinkedBinaries();
-				unlinkedFiles.forEach((file) => {
-					promises.push(
-						this.metaDataGenerator
-							.create(file as TFile)
-							.then(() => {
-								new Notice(`Note for ${file.name} is created.`);
-								this.fileListAdapter.add(file.path);
-							})
-					);
-				});
-				await Promise.all(promises);
-				this.fileListAdapter.save();
+				for (const file of unlinkedFiles) {
+					await this.createAndRegister(file);
+				}
+				await this.fileListAdapter.save();
 			},
 		});
 
@@ -177,8 +154,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 							await this.metaDataGenerator.create(
 								file,
 								fileDir,
-								this.settings.contextMenuTemplatePath ||
-									undefined
+								this.settings.contextMenuTemplatePath || undefined
 							);
 							new Notice(
 								`Created note from "${file.name}" in "${fileDir}".`
@@ -189,6 +165,17 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		);
 	}
 
+	private async createAndRegister(file: TFile): Promise<void> {
+		try {
+			const attachmentPath = await this.metaDataGenerator.create(file);
+			new Notice(`Note for ${file.name} is created.`);
+			this.fileListAdapter.add(attachmentPath);
+		} catch (error) {
+			console.error('Binary File Manager conversion failed', error);
+			new Notice(`Could not create a note for ${file.name}.`);
+		}
+	}
+
 	// onunload() {}
 
 	async loadSettings() {
@@ -197,18 +184,10 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			DEFAULT_SETTINGS,
 			await this.loadData()
 		);
-		if (!this.settings.watchedFolders?.length) {
-			this.settings.watchedFolders = [
-				{
-					binaryFilePath: this.settings.binaryFilePath,
-					attachmentsFilePath: this.settings.attachmentsFilePath,
-					folder: this.settings.folder,
-					filenameFormat: this.settings.filenameFormat,
-					templatePath: this.settings.templatePath,
-					useTemplater: this.settings.useTemplater,
-				},
-			];
-		}
+		this.settings.watchedFolders = normalizeWatchedFolders(
+			this.settings.binaryFilePath,
+			this.settings.watchedFolders
+		);
 	}
 
 	async saveSettings() {

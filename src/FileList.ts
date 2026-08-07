@@ -55,8 +55,8 @@ export class FileListAdapter {
 		}
 
 		const binaryFiles = (await this.app.vault.adapter.read(storageFilePath))
-			.trim()
-			.split(/\r?\n/);
+			.split(/\r?\n/)
+			.filter((path) => path !== '');
 		this.registeredBinaryFilePaths = new Set<string>(binaryFiles);
 	}
 
