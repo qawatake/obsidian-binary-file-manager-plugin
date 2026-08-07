@@ -12,7 +12,8 @@
 		"lint:eslint": "eslint src --ext .ts",
 		"dev": "node esbuild.config.mjs",
 		"build": "node esbuild.config.mjs production",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"test": "esbuild tests/core.test.ts --bundle --platform=node --format=cjs --outfile=/private/tmp/binary-file-manager-core.test.cjs && node --test /private/tmp/binary-file-manager-core.test.cjs"
 	},
 	"keywords": [],
 	"author": "qawatake",
