@@ -1,7 +1,7 @@
 import { App, Plugin } from 'obsidian';
 
 export class UncoveredApp extends App {
-	plugins: { plugins: PluginMap };
+	plugins!: { plugins: PluginMap };
 }
 
 interface PluginMap {

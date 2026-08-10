@@ -2,7 +2,7 @@ export async function retry<T>(
 	callback: () => T | undefined,
 	timeoutMilliSecond: number,
 	trials: number,
-	check: (_value: T) => boolean = (_: T) => true
+	check: (_value: T) => boolean = () => true
 ): Promise<T | undefined> {
 	if (!Number.isInteger(trials)) {
 		throw `arg trials: ${trials} is not an integer
@@ -34,7 +34,7 @@ async function delay(milliSecond: number): Promise<undefined> {
 }
 
 export async function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const INVALID_CHARS_IN_FILE_NAME = new Set<string>([

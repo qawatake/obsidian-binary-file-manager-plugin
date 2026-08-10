@@ -7,12 +7,11 @@ const REGISTERED_BINARY_FILE_STORAGE_FILE_NAME =
 
 export class FileListAdapter {
 	private app: App;
-	private plugin: BinaryFileManagerPlugin;
 	private registeredBinaryFilePaths: Set<string>;
 
 	constructor(app: App, plugin: BinaryFileManagerPlugin) {
 		this.app = app;
-		this.plugin = plugin;
+		void plugin;
 		this.registeredBinaryFilePaths = new Set<string>();
 		this.app.workspace.onLayoutReady(async () => {
 			this.deleteNonExistingBinaryFiles();
@@ -56,8 +55,8 @@ export class FileListAdapter {
 		}
 
 		const binaryFiles = (await this.app.vault.adapter.read(storageFilePath))
-			.trim()
-			.split(/\r?\n/);
+			.split(/\r?\n/)
+			.filter((path) => path !== '');
 		this.registeredBinaryFilePaths = new Set<string>(binaryFiles);
 	}
 

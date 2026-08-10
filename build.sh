@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # This script builds the plugin and copies the output files into the associated plugin directory
 # After this build script is run, this plugin in Obisidian should disabled/enabled to refresh it
 
 # variables
 SOURCE_DIR="/Users/willjasen/GitHub/obsidian-binary-file-manager-plugin";
-PLUGIN_DIR="/Users/willjasen/Library/Mobile Documents/iCloud~md~obsidian/Documents/willjasen/.obsidian/plugins/obsidian-binary-file-manager-plugin";
+PLUGIN_DIR="/Users/willjasen/Library/Mobile Documents/iCloud~md~obsidian/Documents/testing/.obsidian/plugins/obsidian-binary-file-manager-plugin";
 FILES=( "main.js" "manifest.json" "styles.css" );
 
 
@@ -19,7 +19,7 @@ fi
 # Go to the source directory and build this plugin
 
 cd "$SOURCE_DIR";
-npm i --silent; npm run build > /dev/null 2>&1;
+npm ci --silent && npm run build;
 
 # Copy built files into the plugin directory
 for file in "${FILES[@]}"
