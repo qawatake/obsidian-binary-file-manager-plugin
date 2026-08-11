@@ -1,3 +1,59 @@
 .binary-file-manager-text-error {
 	color: var(--text-error);
 }
+
+.binary-file-manager-extensions-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5em;
+	margin-top: 0.5em;
+	margin-bottom: 1em;
+}
+
+.binary-file-manager-extension-chip {
+	display: flex;
+	align-items: center;
+	background: var(--background-secondary-alt);
+	color: var(--text-normal);
+	border-radius: 1em;
+	padding: 0.2em 0.8em 0.2em 0.8em;
+	font-size: 0.95em;
+	margin: 0;
+	line-height: 1.5;
+	box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.binary-file-manager-extension-chip .remove-btn {
+	margin-left: 0.5em;
+	cursor: pointer;
+	color: var(--text-faint);
+	font-size: 1.1em;
+	border: none;
+	background: none;
+	padding: 0;
+	line-height: 1;
+	transition: color 0.15s;
+}
+
+.binary-file-manager-extension-chip .remove-btn:hover {
+	color: var(--text-error);
+}
+
+.binary-file-manager-watched-folder,
+.binary-file-manager-context-menu {
+	margin: 1em 0;
+	padding: 0.75em 1em;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
+
+.binary-file-manager-watched-folder summary,
+.binary-file-manager-context-menu summary {
+	cursor: pointer;
+	font-weight: var(--font-semibold);
+}
+
+.binary-file-manager-watched-folder h4 {
+	display: none;
+}

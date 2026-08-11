@@ -4,17 +4,30 @@ import { BinaryFileManagerSettingTab } from 'Setting';
 import { FileExtensionManager } from 'Extension';
 import { FileListAdapter } from 'FileList';
 import { MetaDataGenerator } from 'Generator';
+import {
+	normalizeWatchedFolders,
+	SETTINGS_VERSION,
+	WatchedFolderSettings,
+} from 'Settings';
+import { SerialQueue } from 'SerialQueue';
 
 interface BinaryFileManagerSettings {
+	settingsVersion: number;
 	autoDetection: boolean;
 	extensions: string[];
 	folder: string;
+	binaryFilePath: string;
+	attachmentsFilePath: string;
 	filenameFormat: string;
 	templatePath: string;
 	useTemplater: boolean;
+	contextMenuTemplatePath: string; // NEW: separate template for context menu
+	watchedFolders: WatchedFolderSettings[];
 }
+export type { WatchedFolderSettings } from 'Settings';
 
 const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
+	settingsVersion: SETTINGS_VERSION,
 	autoDetection: false,
 	extensions: [
 		'png',
@@ -35,18 +48,23 @@ const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 		'ogv',
 		'pdf',
 	],
-	folder: '/',
+	folder: '',
+	binaryFilePath: '',
+	attachmentsFilePath: '_attachments',
 	filenameFormat: 'INFO_{{NAME}}_{{EXTENSION:UP}}',
 	templatePath: '',
 	useTemplater: false,
+	contextMenuTemplatePath: '',
+	watchedFolders: [],
 };
 
 export default class BinaryFileManagerPlugin extends Plugin {
-	settings: BinaryFileManagerSettings;
-	formatter: Formatter;
-	metaDataGenerator: MetaDataGenerator;
-	fileExtensionManager: FileExtensionManager;
-	fileListAdapter: FileListAdapter;
+	settings!: BinaryFileManagerSettings;
+	formatter!: Formatter;
+	metaDataGenerator!: MetaDataGenerator;
+	fileExtensionManager!: FileExtensionManager;
+	fileListAdapter!: FileListAdapter;
+	private autoDetectionQueue = new SerialQueue();
 
 	override async onload() {
 		await this.loadSettings();
@@ -57,22 +75,10 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		this.metaDataGenerator = new MetaDataGenerator(this.app, this);
 
 		this.registerEvent(
-			this.app.vault.on('create', async (file: TAbstractFile) => {
-				if (!this.settings.autoDetection) {
-					return;
-				}
-				if (
-					!(await this.metaDataGenerator.shouldCreateMetaDataFile(
-						file
-					))
-				) {
-					return;
-				}
-
-				await this.metaDataGenerator.create(file as TFile);
-				new Notice(`Metadata file of ${file.name} is created.`);
-				this.fileListAdapter.add(file.path);
-				await this.fileListAdapter.save();
+			this.app.vault.on('create', (file: TAbstractFile) => {
+				void this.autoDetectionQueue.enqueue(() =>
+					this.processAutoDetectedFile(file)
+				);
 			})
 		);
 
@@ -89,9 +95,8 @@ export default class BinaryFileManagerPlugin extends Plugin {
 		// Commands
 		this.addCommand({
 			id: 'binary-file-manager-manual-detection',
-			name: 'Create metadata for binary files',
+			name: 'Create notes for binary files',
 			callback: async () => {
-				const promises: Promise<void>[] = [];
 				const allFiles = this.app.vault.getFiles();
 				for (const file of allFiles) {
 					if (
@@ -102,58 +107,98 @@ export default class BinaryFileManagerPlugin extends Plugin {
 						continue;
 					}
 
-					promises.push(
-						this.metaDataGenerator
-							.create(file as TFile)
-							.then(() => {
-								new Notice(
-									`Metadata file of ${file.name} is created.`
-								);
-								this.fileListAdapter.add(file.path);
-							})
-					);
+					await this.createAndRegister(file);
 				}
-				await Promise.all(promises);
-				this.fileListAdapter.save();
+				await this.fileListAdapter.save();
 			},
 		});
 
 		this.addCommand({
 			id: 'binary-file-manager-detect-unlinked-binary-files',
-			name: 'Create metadata for unlinked binary files',
+			name: 'Create notes for unlinked binary files',
 			callback: async () => {
-				const promises: Promise<void>[] = [];
 				const unlinkedFiles =
 					this.metaDataGenerator.findUnlinkedBinaries();
-				unlinkedFiles.forEach((file) => {
-					promises.push(
-						this.metaDataGenerator
-							.create(file as TFile)
-							.then(() => {
-								new Notice(
-									`Metadata file of ${file.name} is created.`
-								);
-								this.fileListAdapter.add(file.path);
-							})
-					);
-				});
-				await Promise.all(promises);
-				this.fileListAdapter.save();
+				for (const file of unlinkedFiles) {
+					await this.createAndRegister(file);
+				}
+				await this.fileListAdapter.save();
 			},
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new BinaryFileManagerSettingTab(this.app, this));
+
+		// Add context menu option for binary files
+		this.registerEvent(
+			this.app.workspace.on('file-menu', (menu, file) => {
+				if (!(file instanceof TFile)) return;
+				const ext = this.fileExtensionManager.getExtensionMatchedBest(
+					file.name
+				);
+				if (!ext) return;
+
+				menu.addItem((item) => {
+					item.setTitle('Create note from binary file')
+						.setIcon('arrow-right')
+						.onClick(async () => {
+							// Use the file's current directory as the base
+							const fileDir = file.parent?.path || '';
+							// Pass contextMenuTemplatePath as override
+							await this.metaDataGenerator.create(
+								file,
+								fileDir,
+								this.settings.contextMenuTemplatePath ||
+									undefined
+							);
+							new Notice(
+								`Created note from "${file.name}" in "${fileDir}".`
+							);
+						});
+				});
+			})
+		);
+	}
+
+	private async createAndRegister(file: TFile): Promise<void> {
+		try {
+			const attachmentPath = await this.metaDataGenerator.create(file);
+			new Notice(`Note for ${file.name} is created.`);
+			this.fileListAdapter.add(attachmentPath);
+		} catch (error) {
+			console.error('Binary File Manager conversion failed', error);
+			new Notice(`Could not create a note for ${file.name}.`);
+		}
+	}
+
+	private async processAutoDetectedFile(file: TAbstractFile): Promise<void> {
+		if (!this.settings.autoDetection) {
+			return;
+		}
+		if (!(await this.metaDataGenerator.shouldCreateMetaDataFile(file))) {
+			return;
+		}
+		await this.createAndRegister(file as TFile);
+		await this.fileListAdapter.save();
 	}
 
 	// onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
+		const savedSettings = await this.loadData();
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, savedSettings);
+		const needsMigration =
+			savedSettings !== null &&
+			(savedSettings as Partial<BinaryFileManagerSettings>)
+				.settingsVersion !== SETTINGS_VERSION;
+		this.settings.watchedFolders = normalizeWatchedFolders(
+			this.settings.binaryFilePath,
+			this.settings.watchedFolders
 		);
+		this.settings.settingsVersion = SETTINGS_VERSION;
+		if (needsMigration) {
+			await this.saveSettings();
+		}
 	}
 
 	async saveSettings() {

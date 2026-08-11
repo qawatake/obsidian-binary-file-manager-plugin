@@ -1,13 +1,19 @@
-## Binary File Manager Plugin
+## Obsidian Binary File Manager
 
-This plugin detects new binary files in the vault and create markdown files with metadata.
+![GitHub manifest version (path)](https://img.shields.io/github/manifest-json/v/willjasen/obsidian-binary-file-manager-plugin)
+
+This plugin detects new binary files in the vault and creates markdown files with metadata. The new binary file can then be moved into a different directory, like attachments.
 
 By using metadata files, you can take advantage of the rich functionality provied by Obsidian such as
-- full text search, 
-- tags and aliases, 
+- full text search,
+- tags and aliases,
 - internal links, and so on.
 
-For example, if you add tags to the metadata of an image file, then you can indirectly access the image file by tag-searching (and following an internal link in the metadata).
+### Use cases
+
+For a case where there are incoming files into Obsidian, like .pdf files coming a paper scanner, this plugin handles creating a new note for that scan.
+
+For another example, if you add tags to the metadata of an image file, then you can indirectly access the image file by tag-searching (and following an internal link in the metadata).
 
 [![Image from Gyazo](https://i.gyazo.com/6c46d863e4c31d0815bcf027fdb48f92.gif)](https://gyazo.com/6c46d863e4c31d0815bcf027fdb48f92)
 
