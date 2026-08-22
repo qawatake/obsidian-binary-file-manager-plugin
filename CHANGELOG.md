@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.2](https://github.com/qawatake/obsidian-binary-file-manager-plugin/compare/0.3.1...0.3.2) - 2026-08-22
+
+- Show settings suggestions when settings open in a pop-out window by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/22
+
 ## [0.3.1](https://github.com/qawatake/obsidian-binary-file-manager-plugin/compare/0.3.0...0.3.1) - 2026-08-16
 
 - Bump esbuild to 0.28.1 by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/18
