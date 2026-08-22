@@ -27,13 +27,15 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: jdx/mise-action@v2
         with:
-          node-version: 22
+          version: 2024.11.3
+          install: true
+          cache: true
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       - name: Build
-        run: npm run build
+        run: pnpm build
       - name: Upload build artifact to release
         uses: softprops/action-gh-release@v1
         with:

@@ -1,0 +1,3 @@
+# No dependency needs lifecycle scripts (esbuild ships prebuilt binaries via
+# optionalDependencies), so keep pnpm 10's default of blocking them all.
+onlyBuiltDependencies: []
