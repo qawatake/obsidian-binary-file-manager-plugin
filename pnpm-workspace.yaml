@@ -1,0 +1,5 @@
+# esbuild ships prebuilt binaries via optionalDependencies; its postinstall is
+# only a sanity check, so keep pnpm 10 blocking it (and every other lifecycle
+# script) instead of allow-listing anything.
+ignoredBuiltDependencies:
+  - esbuild
