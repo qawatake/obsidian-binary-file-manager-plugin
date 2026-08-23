@@ -1,9 +1,9 @@
-import { Notice, Plugin, TAbstractFile, TFile } from 'obsidian';
-import { Formatter } from 'Formatter';
-import { BinaryFileManagerSettingTab } from 'Setting';
 import { FileExtensionManager } from 'Extension';
 import { FileListAdapter } from 'FileList';
+import { Formatter } from 'Formatter';
 import { MetaDataGenerator } from 'Generator';
+import { BinaryFileManagerSettingTab } from 'Setting';
+import { Notice, Plugin, type TAbstractFile, type TFile } from 'obsidian';
 
 interface BinaryFileManagerSettings {
 	autoDetection: boolean;
@@ -61,11 +61,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 				if (!this.settings.autoDetection) {
 					return;
 				}
-				if (
-					!(await this.metaDataGenerator.shouldCreateMetaDataFile(
-						file
-					))
-				) {
+				if (!(await this.metaDataGenerator.shouldCreateMetaDataFile(file))) {
 					return;
 				}
 
@@ -94,23 +90,15 @@ export default class BinaryFileManagerPlugin extends Plugin {
 				const promises: Promise<void>[] = [];
 				const allFiles = this.app.vault.getFiles();
 				for (const file of allFiles) {
-					if (
-						!(await this.metaDataGenerator.shouldCreateMetaDataFile(
-							file
-						))
-					) {
+					if (!(await this.metaDataGenerator.shouldCreateMetaDataFile(file))) {
 						continue;
 					}
 
 					promises.push(
-						this.metaDataGenerator
-							.create(file as TFile)
-							.then(() => {
-								new Notice(
-									`Metadata file of ${file.name} is created.`
-								);
-								this.fileListAdapter.add(file.path);
-							})
+						this.metaDataGenerator.create(file as TFile).then(() => {
+							new Notice(`Metadata file of ${file.name} is created.`);
+							this.fileListAdapter.add(file.path);
+						})
 					);
 				}
 				await Promise.all(promises);
@@ -123,18 +111,13 @@ export default class BinaryFileManagerPlugin extends Plugin {
 			name: 'Create metadata for unlinked binary files',
 			callback: async () => {
 				const promises: Promise<void>[] = [];
-				const unlinkedFiles =
-					this.metaDataGenerator.findUnlinkedBinaries();
+				const unlinkedFiles = this.metaDataGenerator.findUnlinkedBinaries();
 				unlinkedFiles.forEach((file) => {
 					promises.push(
-						this.metaDataGenerator
-							.create(file as TFile)
-							.then(() => {
-								new Notice(
-									`Metadata file of ${file.name} is created.`
-								);
-								this.fileListAdapter.add(file.path);
-							})
+						this.metaDataGenerator.create(file as TFile).then(() => {
+							new Notice(`Metadata file of ${file.name} is created.`);
+							this.fileListAdapter.add(file.path);
+						})
 					);
 				});
 				await Promise.all(promises);
@@ -149,11 +132,7 @@ export default class BinaryFileManagerPlugin extends Plugin {
 	// onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
-		);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
 	async saveSettings() {

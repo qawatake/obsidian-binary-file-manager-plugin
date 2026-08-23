@@ -1,5 +1,5 @@
-import BinaryFileManagerPlugin from 'main';
-import { App, normalizePath } from 'obsidian';
+import type BinaryFileManagerPlugin from 'main';
+import { type App, normalizePath } from 'obsidian';
 
 const PLUGIN_NAME = 'obsidian-binary-file-manager-plugin';
 const REGISTERED_BINARY_FILE_STORAGE_FILE_NAME =
@@ -7,12 +7,10 @@ const REGISTERED_BINARY_FILE_STORAGE_FILE_NAME =
 
 export class FileListAdapter {
 	private app: App;
-	private plugin: BinaryFileManagerPlugin;
 	private registeredBinaryFilePaths: Set<string>;
 
-	constructor(app: App, plugin: BinaryFileManagerPlugin) {
+	constructor(app: App, _plugin: BinaryFileManagerPlugin) {
 		this.app = app;
-		this.plugin = plugin;
 		this.registeredBinaryFilePaths = new Set<string>();
 		this.app.workspace.onLayoutReady(async () => {
 			this.deleteNonExistingBinaryFiles();

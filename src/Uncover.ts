@@ -1,4 +1,4 @@
-import { App, Plugin } from 'obsidian';
+import { App, type Plugin } from 'obsidian';
 
 export class UncoveredApp extends App {
 	plugins: { plugins: PluginMap };

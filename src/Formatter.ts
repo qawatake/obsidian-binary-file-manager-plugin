@@ -1,5 +1,6 @@
-import BinaryFileManagerPlugin from 'main';
-import { App, moment } from 'obsidian';
+import type BinaryFileManagerPlugin from 'main';
+import { type App, moment } from 'obsidian';
+
 const DATE_REGEXP = /{{CDATE:([^}\n\r]*)}}/g;
 const NAME_REGEX = /{{NAME(((:UP)|(:LOW))?)}}/g;
 const FULLNAME_REGEX = /{{FULLNAME(((:UP)|(:LOW))?)}}/g;
@@ -24,9 +25,7 @@ export class Formatter {
 		output = this.replaceNow(output);
 		const fullname = basename(filepath);
 		const extension =
-			this.plugin.fileExtensionManager.getExtensionMatchedBest(
-				fullname
-			) ?? '';
+			this.plugin.fileExtensionManager.getExtensionMatchedBest(fullname) ?? '';
 		const nameWithoutExtension = basename(fullname, extension); // add "." to get like ".png"
 		output = this.replacePath(output, filepath);
 		output = this.replaceFullName(output, fullname);
@@ -53,7 +52,7 @@ export class Formatter {
 			(_matched: string, caseMode: string): string => {
 				if (!caseMode) {
 					return fullname;
-				} else if (caseMode == ':UP') {
+				} else if (caseMode === ':UP') {
 					return fullname.toUpperCase();
 				} else {
 					return fullname.toLowerCase();
@@ -68,7 +67,7 @@ export class Formatter {
 			(_matched: string, caseMode: string): string => {
 				if (!caseMode) {
 					return filename;
-				} else if (caseMode == ':UP') {
+				} else if (caseMode === ':UP') {
 					return filename.toUpperCase();
 				} else {
 					return filename.toLowerCase();
@@ -83,7 +82,7 @@ export class Formatter {
 			(_matched: string, caseMode: string): string => {
 				if (!caseMode) {
 					return extension;
-				} else if (caseMode == ':UP') {
+				} else if (caseMode === ':UP') {
 					return extension.toUpperCase();
 				} else {
 					return extension.toLowerCase();
@@ -108,7 +107,7 @@ export class Formatter {
 			(_matched: string, caseMode: string): string => {
 				if (!caseMode) {
 					return filepath;
-				} else if (caseMode == ':UP') {
+				} else if (caseMode === ':UP') {
 					return filepath.toUpperCase();
 				} else {
 					return filepath.toLowerCase();

@@ -1,4 +1,4 @@
-import BinaryFileManagerPlugin from 'main';
+import type BinaryFileManagerPlugin from 'main';
 
 export class FileExtensionManager {
 	private plugin: BinaryFileManagerPlugin;
@@ -41,7 +41,7 @@ export class FileExtensionManager {
 	public verify(filepath: string): boolean {
 		// i want to use return so avoid to use forEach
 		for (const ext of this.extensions) {
-			if (filepath.endsWith('.' + ext)) {
+			if (filepath.endsWith(`.${ext}`)) {
 				return true;
 			}
 		}

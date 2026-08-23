@@ -1,16 +1,16 @@
-import BinaryFileManagerPlugin from 'main';
+import { validFileName } from 'Util';
+import type BinaryFileManagerPlugin from 'main';
 import {
+	type App,
+	ButtonComponent,
+	Modal,
+	moment,
+	Notice,
 	PluginSettingTab,
 	Setting,
-	App,
-	Notice,
-	moment,
-	Modal,
-	ButtonComponent,
 } from 'obsidian';
-import { FolderSuggest } from 'suggesters/FolderSuggester';
 import { FileSuggest } from 'suggesters/FileSuggester';
-import { validFileName } from 'Util';
+import { FolderSuggest } from 'suggesters/FolderSuggester';
 
 export class BinaryFileManagerSettingTab extends PluginSettingTab {
 	plugin: BinaryFileManagerPlugin;
@@ -27,9 +27,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Enable auto detection')
-			.setDesc(
-				'Detects new binary files and create metadata automatically.'
-			)
+			.setDesc('Detects new binary files and create metadata automatically.')
 			.addToggle((component) => {
 				component
 					.setValue(this.plugin.settings.autoDetection)
@@ -70,10 +68,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 							moment.now()
 						);
 
-						this.displaySampleFileNameDesc(
-							setting.descEl,
-							sampleFileName
-						);
+						this.displaySampleFileNameDesc(setting.descEl, sampleFileName);
 
 						// check if file name contains valid letters like "/" or ":"
 						const { valid } = validFileName(sampleFileName);
@@ -132,12 +127,8 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 						new Notice('extension "md" is prohibited');
 						return;
 					}
-					if (
-						this.plugin.fileExtensionManager.has(extensionToBeAdded)
-					) {
-						new Notice(
-							`${extensionToBeAdded} is already registered`
-						);
+					if (this.plugin.fileExtensionManager.has(extensionToBeAdded)) {
+						new Notice(`${extensionToBeAdded} is already registered`);
 						return;
 					}
 					this.plugin.fileExtensionManager.add(extensionToBeAdded);
@@ -174,10 +165,7 @@ export class BinaryFileManagerSettingTab extends PluginSettingTab {
 			});
 	}
 
-	displaySampleFileNameDesc(
-		descEl: HTMLElement,
-		sampleFileName: string
-	): void {
+	displaySampleFileNameDesc(descEl: HTMLElement, sampleFileName: string): void {
 		descEl.empty();
 		descEl.appendChild(
 			createFragment((fragment) => {

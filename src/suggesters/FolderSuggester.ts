@@ -1,8 +1,16 @@
 // Credits go to Liam's Periodic Notes Plugin: https://github.com/liamcain/obsidian-periodic-notes/blob/c8b1040f9d84ec8f4b8eae4782b23c2c6bf14e0e/src/ui/file-suggest.ts
-import { AbstractInputSuggest, App, TAbstractFile, TFolder } from 'obsidian';
+import {
+	AbstractInputSuggest,
+	type App,
+	type TAbstractFile,
+	TFolder,
+} from 'obsidian';
 
 export class FolderSuggest extends AbstractInputSuggest<TFolder> {
-	constructor(app: App, private inputEl: HTMLInputElement) {
+	constructor(
+		app: App,
+		private inputEl: HTMLInputElement
+	) {
 		super(app, inputEl);
 	}
 

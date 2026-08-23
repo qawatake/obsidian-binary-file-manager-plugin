@@ -1,15 +1,15 @@
-import BinaryFileManagerPlugin from 'main';
+import type { UncoveredApp } from 'Uncover';
+import { retry } from 'Util';
+import type BinaryFileManagerPlugin from 'main';
 import {
-	App,
-	normalizePath,
-	TAbstractFile,
-	TFile,
+	type App,
 	moment,
 	Notice,
-	Plugin,
+	normalizePath,
+	type Plugin,
+	type TAbstractFile,
+	TFile,
 } from 'obsidian';
-import { UncoveredApp } from 'Uncover';
-import { retry } from 'Util';
 
 const TEMPLATER_PLUGIN_NAME = 'templater-obsidian';
 const DEFAULT_TEMPLATE_CONTENT = `![[{{PATH}}]]
@@ -97,14 +97,10 @@ export class MetaDataGenerator {
 				)
 			);
 		} else {
-			const targetFile = await this.app.vault.create(
-				metaDataFilePath,
-				''
-			);
+			const targetFile = await this.app.vault.create(metaDataFilePath, '');
 
 			try {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// @ts-expect-error
 				const content = await templaterPlugin.templater.parse_template(
 					{ target_file: targetFile, run_mode: 4 },
 					this.plugin.formatter.format(
