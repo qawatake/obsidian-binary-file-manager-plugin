@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/qawatake/obsidian-binary-file-manager-plugin/compare/0.3.3...0.3.4) - 2026-08-30
+
+### Changes
+- ci: tier Dependabot cooldown by semver level by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/44
+- Bump @biomejs/biome from 2.5.8 to 2.5.10 in the npm-minor-patch group by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/46
+- chore: sync dev-environment improvements from core-search-assistant by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/48
+
 ## [0.3.3](https://github.com/qawatake/obsidian-binary-file-manager-plugin/compare/0.3.2...0.3.3) - 2026-08-23
 
 ### Changes
