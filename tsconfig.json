@@ -8,7 +8,6 @@
 		"allowJs": true,
 		"noImplicitAny": true,
 		"moduleResolution": "node",
-		"importHelpers": true,
 		"lib": ["DOM", "ES5", "ES6", "ES7"],
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,

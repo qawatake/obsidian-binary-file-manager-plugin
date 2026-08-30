@@ -42,11 +42,11 @@ const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 };
 
 export default class BinaryFileManagerPlugin extends Plugin {
-	settings: BinaryFileManagerSettings;
-	formatter: Formatter;
-	metaDataGenerator: MetaDataGenerator;
-	fileExtensionManager: FileExtensionManager;
-	fileListAdapter: FileListAdapter;
+	override settings!: BinaryFileManagerSettings;
+	formatter!: Formatter;
+	metaDataGenerator!: MetaDataGenerator;
+	fileExtensionManager!: FileExtensionManager;
+	fileListAdapter!: FileListAdapter;
 
 	override async onload() {
 		await this.loadSettings();
