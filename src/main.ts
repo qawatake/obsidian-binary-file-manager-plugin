@@ -12,6 +12,7 @@ interface BinaryFileManagerSettings {
 	filenameFormat: string;
 	templatePath: string;
 	useTemplater: boolean;
+	ignoredPaths: string[];
 }
 
 const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
@@ -39,6 +40,7 @@ const DEFAULT_SETTINGS: BinaryFileManagerSettings = {
 	filenameFormat: 'INFO_{{NAME}}_{{EXTENSION:UP}}',
 	templatePath: '',
 	useTemplater: false,
+	ignoredPaths: [],
 };
 
 export default class BinaryFileManagerPlugin extends Plugin {
@@ -62,6 +64,11 @@ export default class BinaryFileManagerPlugin extends Plugin {
 					return;
 				}
 				if (!(await this.metaDataGenerator.shouldCreateMetaDataFile(file))) {
+					return;
+				}
+
+				// Check if the file path should be ignored during auto detection
+				if (this.isPathIgnored(file.path)) {
 					return;
 				}
 
@@ -94,6 +101,11 @@ export default class BinaryFileManagerPlugin extends Plugin {
 						continue;
 					}
 
+					// Check if the file path should be ignored during manual detection
+					if (this.isPathIgnored(file.path)) {
+						return;
+					}
+
 					promises.push(
 						this.metaDataGenerator.create(file as TFile).then(() => {
 							new Notice(`Metadata file of ${file.name} is created.`);
@@ -113,6 +125,10 @@ export default class BinaryFileManagerPlugin extends Plugin {
 				const promises: Promise<void>[] = [];
 				const unlinkedFiles = this.metaDataGenerator.findUnlinkedBinaries();
 				unlinkedFiles.forEach((file) => {
+					// Check if the file path should be ignored during unlinked detection
+					if (this.isPathIgnored(file.path)) {
+						return;
+					}
 					promises.push(
 						this.metaDataGenerator.create(file as TFile).then(() => {
 							new Notice(`Metadata file of ${file.name} is created.`);
@@ -130,6 +146,36 @@ export default class BinaryFileManagerPlugin extends Plugin {
 	}
 
 	// onunload() {}
+
+	private isPathIgnored(filePath: string): boolean {
+		if (this.settings.ignoredPaths.length === 0) {
+			return false;
+		}
+
+		for (const ignoredPath of this.settings.ignoredPaths) {
+			const trimmedPath = ignoredPath.trim();
+			if (trimmedPath === '') {
+				continue;
+			}
+
+			// Convert glob pattern to regex
+			const regexPattern = trimmedPath
+				.replace(/\*/g, '.*')
+				.replace(/\?/g, '.');
+
+			const regex = new RegExp(`^${regexPattern}(?:/|$)`);
+
+			// Check if the file path or its parent directory matches the pattern
+			if (
+				regex.test(filePath) ||
+				regex.test(filePath.split('/').slice(0, -1).join('/'))
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
