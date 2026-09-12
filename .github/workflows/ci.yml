@@ -33,6 +33,8 @@ jobs:
       - run: node scripts/check-toolchain.mjs
       # 全 action が commit SHA に pin されているか (tag 参照を新しく足すと落ちる)
       - run: node scripts/check-actions-pinned.mjs
+      # Dependabot は package.json と lockfile しか書き換えないので、$schema に埋まった version が取り残される
+      - run: node scripts/check-config-schema.mjs
       # 全部 devDependencies (一部は main.js に bundle される) なので全体を high 以上で止める
       - run: pnpm audit --audit-level=high
       - run: pnpm lint
