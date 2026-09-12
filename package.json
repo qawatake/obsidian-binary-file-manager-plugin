@@ -1,30 +1,31 @@
 {
-	"name": "obsidian-binary-file-manager-plugin",
-	"version": "0.12.0",
-	"description": "This plugin detects new binary files in the vault and create markdown files with metadata.",
-	"main": "main.js",
-	"packageManager": "pnpm@10.33.2",
-	"engines": {
-		"node": ">=22"
-	},
-	"scripts": {
-		"fix:format": "biome format --write src",
-		"lint:format": "biome format --check src",
-		"fix:lint": "biome lint --write src",
-		"lint": "biome check src",
-		"typecheck": "tsc --noEmit",
-		"fix": "biome check --write src",
-		"dev": "node esbuild.config.mjs",
-		"build": "node esbuild.config.mjs production"
-	},
-	"keywords": [],
-	"author": "qawatake",
-	"license": "MIT",
-	"devDependencies": {
-		"@biomejs/biome": "2.5.12",
-		"@types/node": "24.13.3",
-		"esbuild": "0.28.2",
-		"obsidian": "^1.13.1",
-		"typescript": "5.9.3"
-	}
+  "name": "obsidian-binary-file-manager-plugin",
+  "version": "0.12.0",
+  "description": "This plugin detects new binary files in the vault and create markdown files with metadata.",
+  "main": "main.js",
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "fix:format": "biome format --write src",
+    "lint:format": "biome format --check src",
+    "fix:lint": "biome lint --write src",
+    "lint": "biome check src",
+    "typecheck": "tsc --noEmit",
+    "fix": "biome check --write src",
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "check": "node scripts/check-toolchain.mjs && node scripts/check-actions-pinned.mjs && pnpm lint && pnpm typecheck && pnpm build"
+  },
+  "keywords": [],
+  "author": "qawatake",
+  "license": "MIT",
+  "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "@types/node": "24.13.3",
+    "esbuild": "0.28.2",
+    "obsidian": "^1.13.1",
+    "typescript": "5.9.3"
+  }
 }
