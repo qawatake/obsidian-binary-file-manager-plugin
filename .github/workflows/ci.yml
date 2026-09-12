@@ -4,6 +4,11 @@ on:
   pull_request:
   push:
     branches: ["main"]
+  # 週次で main を検査する。commit がない期間でも `pnpm audit` が新しい advisory を拾えるようにするため
+  # (Dependabot は親 package が exact pin する transitive 依存の advisory を PR にできないことがある)。
+  # 土曜 03:00 JST = 金曜 18:00 UTC。Dependabot (土曜 03:00 JST) と同じタイミングにそろえる。
+  schedule:
+    - cron: "0 18 * * 5"
 
 permissions:
   contents: read
@@ -24,6 +29,12 @@ jobs:
           install: true
           cache: true
       - run: pnpm install --frozen-lockfile
+      # mise.toml と package.json (packageManager / engines / @types/node) の pnpm・Node version がずれていないか
+      - run: node scripts/check-toolchain.mjs
+      # 全 action が commit SHA に pin されているか (tag 参照を新しく足すと落ちる)
+      - run: node scripts/check-actions-pinned.mjs
+      # 全部 devDependencies (一部は main.js に bundle される) なので全体を high 以上で止める
+      - run: pnpm audit --audit-level=high
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm build
