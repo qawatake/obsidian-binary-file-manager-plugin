@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.3.4](https://github.com/qawatake/obsidian-binary-file-manager-plugin/compare/0.3.3...0.3.4) - 2026-09-12
+
+### Changes
+- ci: tier Dependabot cooldown by semver level by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/44
+- Bump @biomejs/biome from 2.5.8 to 2.5.10 in the npm-minor-patch group by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/46
+- chore: sync dev-environment improvements from core-search-assistant by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/48
+- chore: schedule Dependabot on Saturday 03:00 JST by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/49
+- chore: use flat 7-day cooldown for github-actions by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/50
+- Bump jdx/mise-action from 4.2.5 to 4.3.0 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/52
+- Bump @biomejs/biome from 2.5.10 to 2.5.11 in the npm-minor-patch group by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/54
+- Bump softprops/action-gh-release from 3.0.2 to 3.0.3 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/51
+- Bump Songmu/tagpr from 1.20.1 to 1.20.2 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/53
+- Bump Songmu/tagpr from 1.20.2 to 1.20.3 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/55
+- Bump @biomejs/biome from 2.5.11 to 2.5.12 in the npm-minor-patch group by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/56
+- Tighten Dependabot and CI supply-chain policy by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/57
+- Point biome.jsonc at the installed Biome schema by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/59
+- Check that config $schema versions match package.json by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/60
+- Align check-config-schema.mjs imports with Biome's order by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/61
+- Pin dependency ranges to the resolved versions by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/62
+
 ## [0.3.3](https://github.com/qawatake/obsidian-binary-file-manager-plugin/compare/0.3.2...0.3.3) - 2026-08-23
 
 ### Changes
