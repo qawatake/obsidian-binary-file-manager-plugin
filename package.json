@@ -16,7 +16,7 @@
     "fix": "biome check --write src",
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
-    "check": "node scripts/check-toolchain.mjs && node scripts/check-actions-pinned.mjs && pnpm lint && pnpm typecheck && pnpm build"
+    "check": "node scripts/check-toolchain.mjs && node scripts/check-actions-pinned.mjs && node scripts/check-config-schema.mjs && pnpm lint && pnpm typecheck && pnpm build"
   },
   "keywords": [],
   "author": "qawatake",
