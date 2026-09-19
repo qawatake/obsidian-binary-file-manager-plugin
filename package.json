@@ -22,8 +22,8 @@
   "author": "qawatake",
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "2.5.12",
-    "@types/node": "24.13.3",
+    "@biomejs/biome": "2.5.13",
+    "@types/node": "24.13.4",
     "esbuild": "0.28.2",
     "obsidian": "1.13.1",
     "typescript": "5.9.3"
