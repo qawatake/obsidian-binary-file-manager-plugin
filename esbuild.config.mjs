@@ -1,4 +1,5 @@
 import esbuild from 'esbuild';
+import { writeFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import process from 'process';
 
@@ -23,10 +24,13 @@ const context = await esbuild.context({
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
 	outfile: 'main.js',
+	// Lists every input bundled into main.js; scripts/check-bundled-deps.mjs reads it.
+	metafile: true,
 });
 
 if (prod) {
-	await context.rebuild();
+	const result = await context.rebuild();
+	writeFileSync('meta.json', JSON.stringify(result.metafile));
 	process.exit(0);
 } else {
 	await context.watch();
