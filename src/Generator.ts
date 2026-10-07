@@ -49,10 +49,10 @@ export class MetaDataGenerator {
 	}
 
 	async create(file: TFile) {
-		const metaDataFileName = this.uniquefyMetaDataFileName(
-			this.generateMetaDataFileName(file)
-		);
-		const metaDataFilePath = `${this.plugin.settings.folder}/${metaDataFileName}`;
+		const metaDataFileName = this.generateMetaDataFileName(file)
+		const metaDataFileDirectory = this.plugin.settings.folder === "./" ? file.parent.path : this.plugin.settings.folder;
+		const uniqueMetaDataFileName = this.uniquefyMetaDataFileName(metaDataFileName, metaDataFileDirectory);
+		const metaDataFilePath = `${metaDataFileDirectory}/${uniqueMetaDataFileName}`;
 
 		await this.createMetaDataFile(metaDataFilePath, file as TFile);
 	}
@@ -66,9 +66,9 @@ export class MetaDataGenerator {
 		return metaDataFileName;
 	}
 
-	private uniquefyMetaDataFileName(metaDataFileName: string): string {
+	private uniquefyMetaDataFileName(metaDataFileName: string, metaDataFileDirectory: string): string {
 		const metaDataFilePath = normalizePath(
-			`${this.plugin.settings.folder}/${metaDataFileName}`
+			`${metaDataFileDirectory}/${metaDataFileName}`
 		);
 		if (this.app.vault.getAbstractFileByPath(metaDataFilePath)) {
 			return `CONFLICT-${moment().format(
