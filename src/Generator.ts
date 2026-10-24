@@ -34,6 +34,13 @@ export class MetaDataGenerator {
 		if (!(file instanceof TFile)) {
 			return false;
 		}
+		if (
+			!file.path.startsWith(
+				normalizePath(this.plugin.settings.binaryFilePath)
+			)
+		) {
+			return false;
+		}
 
 		const matchedExtension =
 			this.plugin.fileExtensionManager.getExtensionMatchedBest(file.name);
