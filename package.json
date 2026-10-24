@@ -23,7 +23,7 @@
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "@types/node": "24.19.1",
+    "@types/node": "24.19.2",
     "esbuild": "0.28.2",
     "obsidian": "1.14.4",
     "typescript": "5.9.3"
