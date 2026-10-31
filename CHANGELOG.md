@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.3.4](https://github.com/qawatake/obsidian-binary-file-manager-plugin/compare/0.3.3...0.3.4) - 2026-10-31
+
+### Changes
+- ci: tier Dependabot cooldown by semver level by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/44
+- Bump @biomejs/biome from 2.5.8 to 2.5.10 in the npm-minor-patch group by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/46
+- chore: sync dev-environment improvements from core-search-assistant by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/48
+- chore: schedule Dependabot on Saturday 03:00 JST by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/49
+- chore: use flat 7-day cooldown for github-actions by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/50
+- Bump jdx/mise-action from 4.2.5 to 4.3.0 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/52
+- Bump @biomejs/biome from 2.5.10 to 2.5.11 in the npm-minor-patch group by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/54
+- Bump softprops/action-gh-release from 3.0.2 to 3.0.3 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/51
+- Bump Songmu/tagpr from 1.20.1 to 1.20.2 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/53
+- Bump Songmu/tagpr from 1.20.2 to 1.20.3 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/55
+- Bump @biomejs/biome from 2.5.11 to 2.5.12 in the npm-minor-patch group by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/56
+- Tighten Dependabot and CI supply-chain policy by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/57
+- Point biome.jsonc at the installed Biome schema by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/59
+- Check that config $schema versions match package.json by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/60
+- Align check-config-schema.mjs imports with Biome's order by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/61
+- Pin dependency ranges to the resolved versions by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/62
+- Bump the npm-minor-patch group with 2 updates by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/63
+- Bump the npm-minor-patch group with 2 updates by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/64
+- Bump Songmu/tagpr from 1.20.3 to 1.21.0 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/65
+- Bump @types/node from 24.13.5 to 24.19.0 in the npm-minor-patch group across 1 directory by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/66
+- build: main.js に bundle される package を CI で検査する by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/68
+- Bump Songmu/tagpr from 1.21.0 to 1.21.1 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/69
+- Bump the npm-minor-patch group with 2 updates by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/71
+- Bump jdx/mise-action from 4.3.0 to 5.0.1 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/70
+- ci: propagate needs-release label to the tagpr PR by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/72
+- ci: label PRs needs-release / no-release by diffing built artifacts by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/73
+- Bump actions/upload-artifact from 7.0.1 to 7.0.2 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/77
+- Bump obsidian from 1.13.1 to 1.14.4 in the npm-minor-patch group by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/75
+- Bump jdx/mise-action from 5.0.1 to 5.1.1 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/76
+- Bump Songmu/tagpr from 1.21.1 to 1.21.2 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/74
+- chore: bump pnpm 10.33.2 -> 10.34.7 by @qawatake in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/81
+- Bump Songmu/tagpr from 1.21.2 to 1.21.3 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/78
+- Bump @types/node from 24.19.1 to 24.19.2 in the npm-minor-patch group across 1 directory by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/80
+- Bump jdx/mise-action from 5.1.1 to 5.2.0 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/79
+- build(deps): bump jdx/mise-action from 5.2.0 to 5.2.2 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/82
+- build(deps): bump Songmu/tagpr from 1.21.3 to 1.21.4 by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/83
+- build(deps-dev): bump @biomejs/biome from 2.5.15 to 2.6.2 in the npm-minor-patch group by @dependabot[bot] in https://github.com/qawatake/obsidian-binary-file-manager-plugin/pull/84
+
 ## [0.3.3](https://github.com/qawatake/obsidian-binary-file-manager-plugin/compare/0.3.2...0.3.3) - 2026-08-23
 
 ### Changes
